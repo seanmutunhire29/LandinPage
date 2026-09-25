@@ -12,6 +12,8 @@ import Motion from "@/pages/onboarding/Motion"
 import Review from "@/pages/onboarding/Review"
 import { ScrollToTop } from "@/components/ScrollToTop"
 import { RequireAuth } from "@/components/auth/RequireAuth"
+import Projects from "@/pages/Projects"
+import AuthCallback from "@/pages/AuthCallback"
 
 // Monaco + WebContainer code only loads when a project is opened.
 const Workspace = lazy(() => import("@/pages/Workspace"))
@@ -33,6 +35,8 @@ export default function App() {
           <Route path="motion" element={<Motion />} />
           <Route path="review" element={<Review />} />
         </Route>
+        <Route path="/auth/callback" element={<AuthCallback />} />
+        <Route path="/projects" element={<Projects />} />
         <Route
           path="/projects/:projectId"
           element={

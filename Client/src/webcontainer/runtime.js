@@ -6,13 +6,15 @@ import { useWorkspaceStore } from "@/store/useWorkspaceStore"
 
 const store = () => useWorkspaceStore.getState()
 
-// eslint-disable-next-line no-control-regex
+// oxlint-disable-next-line no-control-regex
 const ANSI = /\x1b\[[0-9;?]*[A-Za-z]|\x1b\][^\x07]*\x07/g
+// oxlint-disable-next-line no-control-regex
+const CURSOR_COLUMN = /\x1b\[\d*G/g
 
 /** Strip ANSI codes and keep only the final state of \r-rewritten lines (npm spinners). */
 export function cleanOutput(text) {
   return text
-    .replace(/\x1b\[\d*G/g, "\r") // cursor-to-column rewrites the line, like \r
+    .replace(CURSOR_COLUMN, "\r") // cursor-to-column rewrites the line, like \r
     .replace(ANSI, "")
     .split("\n")
     .map((line) => line.split("\r").filter(Boolean).at(-1) ?? "")
@@ -82,37 +84,43 @@ function startDevServer() {
   return waitForServer()
 }
 
+let mounted = null // Promise<boolean>: container booted and project files mounted
+
 /**
  * Boot a fresh WebContainer for the project, mount its files, install and start
- * the dev server. Resolves once the install has finished (the server starts in
- * the background and sets previewUrl via the server-ready event).
+ * the dev server. The agent may start streaming before this finishes, so boot +
+ * install sit at the head of the command queue and file writes wait for the
+ * mount. Resolves once the install has finished (the server starts in the
+ * background and sets previewUrl via the server-ready event).
  */
-export async function startProject(projectId, files) {
+export function startProject(projectId, files) {
+  wc = null
   devProcess = null
   serverUrl = null
   serverWaiters = []
-  queue = Promise.resolve()
   store().setRuntime({ status: "booting", error: null })
-  try {
-    wc = await bootForProject(projectId)
-    wc.on("server-ready", (_port, url) => {
+
+  mounted = (async () => {
+    const container = await bootForProject(projectId)
+    container.on("server-ready", (_port, url) => {
       serverUrl = url
       useWorkspaceStore.setState({ previewUrl: url })
       store().setRuntime({ status: "ready", error: null })
       serverWaiters.splice(0).forEach((fn) => fn(url))
     })
-    wc.on("error", (err) => store().setRuntime({ status: "error", error: err.message }))
-    await wc.mount(toTree(Object.entries(files).map(([file_path, content]) => ({ file_path, content }))))
-  } catch (err) {
+    container.on("error", (err) => store().setRuntime({ status: "error", error: err.message }))
+    await container.mount(toTree(Object.entries(files).map(([file_path, content]) => ({ file_path, content }))))
+    wc = container
+    return true
+  })().catch((err) => {
     store().setRuntime({ status: "error", error: `Could not start the preview runtime: ${err.message}` })
-    return
-  }
+    return false
+  })
 
-  if (!("package.json" in files)) {
-    store().setRuntime({ status: "idle" })
-    return
-  }
-  await enqueue(async () => {
+  queue = Promise.resolve()
+  return enqueue(async () => {
+    if (!(await mounted)) return
+    if (!("package.json" in files)) return store().setRuntime({ status: "idle" })
     store().setRuntime({ status: "installing" })
     const { exitCode } = await spawnLogged("npm install")
     if (exitCode !== 0) return store().setRuntime({ status: "error", error: "npm install failed, see the terminal" })
@@ -120,9 +128,9 @@ export async function startProject(projectId, files) {
   })
 }
 
-/** Apply a file change (from the agent or the editor) to the running container. */
+/** Apply a file change (from the agent or the editor) to the container, once it is mounted. */
 export async function applyFile(path, content) {
-  if (!wc) return
+  if (!mounted || !(await mounted)) return
   try {
     await writeFile(wc, path, content)
   } catch (err) {

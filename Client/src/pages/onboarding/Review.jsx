@@ -1,45 +1,41 @@
 import { useMemo, useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
-import { Check, Copy, Download, Pencil, RotateCcw } from "lucide-react"
+import { ArrowLeft, Check, Copy, Loader2, Pencil, RotateCcw, Sparkles } from "lucide-react"
 import { useDesignStore } from "@/store/useDesignStore"
+import { useAuthStore } from "@/store/useAuthStore"
 import { buildSpec } from "@/lib/buildSpec"
-import { highlightJson } from "@/lib/highlightJson"
-import { STAGES } from "@/data/stages"
-import { componentCategoryById } from "@/data/components"
-import { sectionById } from "@/data/sections"
+import { createPendingProject, peekPending, savePending } from "@/lib/pendingProject"
 import { StagePage } from "@/components/wizard/WizardLayout"
 import { StageHeader } from "@/components/wizard/StageHeader"
-import { WizardNav } from "@/components/wizard/WizardNav"
 import { useStageNav } from "@/components/wizard/useStageNav"
+import { ChatInput } from "@/components/chat/ChatInput"
+import { AuthDialog } from "@/components/auth/AuthDialog"
 import { Button } from "@/components/ui/button"
 
-function SummaryItem({ stageId, label, value, children }) {
-  const stage = STAGES.find((s) => s.id === stageId)
-  return (
-    <div className="flex flex-col gap-1 rounded-2xl bg-white p-4 ring-1 ring-[#e3e5f0]">
-      <div className="flex items-center justify-between">
-        <span className="text-xs font-semibold tracking-wide text-[#9699a6] uppercase">{label}</span>
-        <Link to={stage.path} className="inline-flex items-center gap-1 text-xs font-semibold text-brand hover:underline" aria-label={`Edit ${label}`}>
-          <Pencil className="size-3" /> Edit
-        </Link>
-      </div>
-      <p className="font-display font-semibold text-brand-navy">{value}</p>
-      {children}
-    </div>
-  )
-}
+const SUGGESTIONS = [
+  "A landing page for a project management SaaS",
+  "A waitlist page for an AI note-taking app",
+  "A launch page for a specialty coffee subscription",
+]
 
 export default function Review() {
   const state = useDesignStore()
   const reset = useDesignStore((s) => s.reset)
+  const user = useAuthStore((s) => s.user)
   const navigate = useNavigate()
-  const { stage, goBack } = useStageNav("review")
-  const [copied, setCopied] = useState(false)
+  const { goBack } = useStageNav("review")
 
   const spec = useMemo(() => buildSpec(state), [state])
   const json = useMemo(() => JSON.stringify(spec, null, 2), [spec])
-  const highlighted = useMemo(() => highlightJson(json), [json])
+  const [copied, setCopied] = useState(false)
+  // A message typed before signing in survives reloads and auth redirects.
+  const [sent, setSent] = useState(() => peekPending()?.firstMessage ?? null)
+  const [authOpen, setAuthOpen] = useState(false)
+  const [creating, setCreating] = useState(false)
+  const [error, setError] = useState(null)
+
   const t = spec.tokens
+  const summary = [spec.meta.direction.name, `${t.typography.headingFont.family} / ${t.typography.bodyFont.family}`, t.color.palette.name, `${spec.composition.sections.length} sections`]
 
   const copy = async () => {
     await navigator.clipboard.writeText(json)
@@ -47,84 +43,132 @@ export default function Review() {
     setTimeout(() => setCopied(false), 2000)
   }
 
-  const download = () => {
-    const url = URL.createObjectURL(new Blob([json], { type: "application/json" }))
-    const a = Object.assign(document.createElement("a"), { href: url, download: `landinpage-spec-${spec.meta.direction.id}.json` })
-    a.click()
-    URL.revokeObjectURL(url)
+  const create = async () => {
+    setCreating(true)
+    setError(null)
+    try {
+      const project = await createPendingProject()
+      if (project) navigate(`/projects/${project.id}`)
+      else setCreating(false)
+    } catch (err) {
+      setError(err.message)
+      setCreating(false)
+    }
   }
 
-  const startOver = () => {
-    reset()
-    navigate("/onboarding/direction")
+  const submit = (text) => {
+    savePending(text, buildSpec(state))
+    setSent(text)
+    if (user) create()
+    else setAuthOpen(true)
   }
 
   return (
-    <>
-      <StagePage>
-        <StageHeader eyebrow="Final step" title={stage.title} blurb={stage.blurb}>
-          <div className="flex flex-wrap gap-2">
-            <Button variant="outline" size="lg" onClick={copy} className="h-11 rounded-full px-5">
-              {copied ? <Check data-icon="inline-start" className="text-brand-green" /> : <Copy data-icon="inline-start" />}
-              {copied ? "Copied" : "Copy JSON"}
-            </Button>
-            <Button size="lg" onClick={download} className="h-11 rounded-full bg-brand px-5 text-white hover:bg-brand-dark">
-              <Download data-icon="inline-start" /> Download .json
-            </Button>
-          </div>
-        </StageHeader>
+    <StagePage>
+      <StageHeader eyebrow="Final step" title="Describe your project" blurb="Your design system is ready. Tell us what the page is for and we'll build it live.">
+        <Button variant="outline" size="lg" onClick={copy} className="h-11 shrink-0 rounded-full px-5">
+          {copied ? <Check data-icon="inline-start" className="text-brand-green" /> : <Copy data-icon="inline-start" />}
+          {copied ? "Copied" : "Copy JSON"}
+        </Button>
+      </StageHeader>
 
-        <div className="grid gap-8 lg:grid-cols-[340px_1fr]">
-          <aside className="flex flex-col gap-3" aria-label="Summary of choices">
-            <SummaryItem stageId="direction" label="Direction" value={spec.meta.direction.name} />
-            <SummaryItem stageId="typography" label="Typography" value={`${t.typography.headingFont.family} / ${t.typography.bodyFont.family}`} />
-            <SummaryItem stageId="color" label="Color" value={t.color.palette.name}>
-              <div className="mt-1 flex h-4 overflow-hidden rounded-full ring-1 ring-black/5">
-                {Object.values(t.color.roles).map((c, i) => (
-                  <span key={i} className="flex-1" style={{ background: c }} />
-                ))}
-              </div>
-            </SummaryItem>
-            <SummaryItem stageId="surface" label="Surface" value={`${t.surface} · ${t.radiusScale.md}px radius`} />
-            <SummaryItem stageId="components" label="Components" value={`${Object.keys(t.components).length} categories`}>
-              <p className="text-xs leading-relaxed text-[#676879]">
-                {Object.entries(t.components)
-                  .map(([cat, v]) => `${componentCategoryById[cat].name}: ${componentCategoryById[cat].variants.find((x) => x.id === v)?.name}`)
-                  .join(" · ")}
-              </p>
-            </SummaryItem>
-            <SummaryItem stageId="layout" label="Layout" value={`${spec.composition.sections.length} sections`}>
-              <ol className="text-xs leading-relaxed text-[#676879]">
-                {spec.composition.sections.map((s) => (
-                  <li key={s.type}>
-                    {s.order + 1}. {sectionById[s.type].name}
-                  </li>
-                ))}
-              </ol>
-            </SummaryItem>
-            <SummaryItem stageId="motion" label="Motion" value={t.motion.preset} />
-            <button onClick={startOver} className="mt-2 inline-flex items-center justify-center gap-2 text-sm font-semibold text-[#676879] hover:text-brand-red">
-              <RotateCcw className="size-4" /> Start over
-            </button>
-          </aside>
-
-          <div className="min-w-0 overflow-hidden rounded-3xl bg-[#1e1e2e] ring-1 ring-black/10">
-            <div className="flex items-center justify-between border-b border-white/10 px-5 py-3">
-              <div className="flex items-center gap-2">
-                <span className="size-3 rounded-full bg-[#FF5F57]" />
-                <span className="size-3 rounded-full bg-[#FEBC2E]" />
-                <span className="size-3 rounded-full bg-[#28C840]" />
-                <span className="ml-3 font-mono text-xs text-white/50">landinpage-spec-{spec.meta.direction.id}.json</span>
-              </div>
-              <span className="font-mono text-xs text-white/40">{json.split("\n").length} lines</span>
-            </div>
-            <pre className="max-h-[75vh] overflow-auto p-5 font-mono text-[13px] leading-relaxed text-[#d4d4d4]">
-              <code>{highlighted}</code>
-            </pre>
-          </div>
+      <div className="mx-auto flex max-w-3xl flex-col gap-4 pb-16">
+        <div className="flex flex-wrap items-center gap-2 text-xs text-[#676879]">
+          {summary.map((s) => (
+            <span key={s} className="rounded-full bg-white px-3 py-1 font-medium ring-1 ring-[#e3e5f0]">
+              {s}
+            </span>
+          ))}
+          <Link to="/onboarding/direction" className="inline-flex items-center gap-1 px-1 font-semibold text-brand hover:underline">
+            <Pencil className="size-3" /> Edit choices
+          </Link>
         </div>
-      </StagePage>
-      <WizardNav onBack={goBack} onNext={download} nextLabel="Download .json" hint="Everything stays in your browser" />
-    </>
+
+        <section className="flex min-h-[420px] flex-col rounded-3xl bg-white p-4 ring-1 ring-[#e3e5f0] md:p-6" aria-label="Project chat">
+          <div className="flex flex-1 flex-col gap-4">
+            <div className="flex gap-3">
+              <span className="grid size-8 shrink-0 place-items-center rounded-full bg-brand text-white">
+                <Sparkles className="size-4" />
+              </span>
+              <p className="pt-1 text-[15px] leading-relaxed text-brand-navy">
+                What are we building? Describe the product and who it's for. I'll use your spec for every design decision and write the copy too.
+              </p>
+            </div>
+
+            {sent && (
+              <div className="ml-8 self-end rounded-2xl rounded-br-md bg-brand px-4 py-2.5 text-[15px] whitespace-pre-wrap text-white">{sent}</div>
+            )}
+
+            {sent && !user && !authOpen && (
+              <div className="flex flex-wrap items-center gap-3 rounded-2xl bg-[#f6f7fb] p-4 text-sm text-[#676879]">
+                <span className="flex-1">Sign in to save your progress and start building.</span>
+                <Button onClick={() => setAuthOpen(true)} className="rounded-full bg-brand px-5 text-white hover:bg-brand-dark">
+                  Continue
+                </Button>
+              </div>
+            )}
+
+            {creating && (
+              <div className="flex items-center gap-2 text-sm text-[#676879]">
+                <Loader2 className="size-4 animate-spin text-brand" /> Setting up your project...
+              </div>
+            )}
+            {error && (
+              <div className="flex flex-wrap items-center gap-3 rounded-xl bg-[#fff0f2] px-3 py-2.5 text-sm text-[#b3263e] ring-1 ring-[#ffd0d8]">
+                <span className="flex-1">Couldn't create the project: {error}</span>
+                <button onClick={create} className="font-semibold underline">
+                  Try again
+                </button>
+              </div>
+            )}
+          </div>
+
+          {!sent && (
+            <div className="mt-6 flex flex-wrap gap-2">
+              {SUGGESTIONS.map((s) => (
+                <button key={s} onClick={() => submit(s)} className="rounded-full bg-[#f6f7fb] px-3 py-1.5 text-left text-xs font-medium text-[#676879] ring-1 ring-[#e3e5f0] hover:text-brand">
+                  {s}
+                </button>
+              ))}
+            </div>
+          )}
+          <ChatInput
+            className="mt-4"
+            onSubmit={submit}
+            busy={creating}
+            disabled={Boolean(sent) && !error}
+            autoFocus
+            placeholder="e.g. A landing page for a project management SaaS aimed at agencies"
+          />
+        </section>
+
+        <div className="flex items-center justify-between text-sm font-semibold text-[#676879]">
+          <button onClick={goBack} className="inline-flex items-center gap-2 hover:text-brand-navy">
+            <ArrowLeft className="size-4" /> Back
+          </button>
+          <button
+            onClick={() => {
+              reset()
+              navigate("/onboarding/direction")
+            }}
+            className="inline-flex items-center gap-2 hover:text-brand-red"
+          >
+            <RotateCcw className="size-4" /> Start over
+          </button>
+        </div>
+      </div>
+
+      <AuthDialog
+        open={authOpen}
+        onOpenChange={setAuthOpen}
+        redirectTo={`${window.location.origin}/auth/callback`}
+        title="Save your progress"
+        description="Create a free account so your design spec and project are saved. You can pick up where you left off from any device."
+        onAuthenticated={() => {
+          setAuthOpen(false)
+          create()
+        }}
+      />
+    </StagePage>
   )
 }

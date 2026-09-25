@@ -4,6 +4,20 @@ FastAPI backend: Supabase auth verification, persistence, the agent loop, and th
 WebSocket that streams agent output to the browser and bridges Bash commands into
 the user's WebContainer.
 
+## Running the whole app
+
+```bash
+# terminal 1: API
+cd server && uv run uvicorn app.main:app --reload --port 8000
+# terminal 2: frontend (serves the COOP/COEP headers WebContainers need)
+cd Client && cp .env.example .env && npm run dev
+```
+
+Flow: wizard → "Describe your project" chat → sign up / log in (email or Google) →
+project created in Supabase → `/projects/:id` workspace boots a WebContainer, the agent
+generates the site live, further messages edit it. Use a Chromium-based browser or Firefox
+(WebContainers with `credentialless` COEP aren't supported in Safari).
+
 ## Setup
 
 ```bash

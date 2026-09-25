@@ -49,7 +49,7 @@ export default function Motion() {
           ))}
         </OptionGrid>
       </StagePage>
-      <WizardNav onBack={goBack} onNext={goNext} nextDisabled={!motion} nextLabel="Review spec" hint={!motion && "Pick a motion style to continue"} />
+      <WizardNav onBack={goBack} onNext={goNext} nextDisabled={!motion} nextLabel="Continue" hint={!motion && "Pick a motion style to continue"} />
     </>
   )
 }

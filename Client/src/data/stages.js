@@ -60,10 +60,10 @@ export const STAGES = [
   {
     id: "review",
     path: "/onboarding/review",
-    label: "Review",
-    title: "Your build spec",
-    blurb: "Everything you chose, compiled into tokens, composition and content.",
-    tagline: "Export a build-ready JSON spec.",
+    label: "Build",
+    title: "Describe your project",
+    blurb: "Tell us what the page is for and we'll build it live from your spec.",
+    tagline: "Describe it, then watch it build live.",
   },
 ]
 
