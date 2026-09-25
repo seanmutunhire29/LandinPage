@@ -70,7 +70,7 @@ export default function Workspace() {
     <div className="flex h-svh flex-col bg-brand-mist">
       <header className="relative z-10 grid h-14 shrink-0 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-4 border-b border-[#e3e5f0] bg-white px-4 shadow-[0_2px_8px_-6px_rgb(24_27_52/0.12)]">
         <div className="flex min-w-0 items-center gap-3">
-          <Link to="/" aria-label="LandInPage home" className="shrink-0 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-brand/40">
+          <Link to="/" aria-label="LandinPage home" className="shrink-0 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-brand/40">
             <Logo size="sm" />
           </Link>
           <span className="h-6 w-px shrink-0 bg-[#e3e5f0]" aria-hidden />

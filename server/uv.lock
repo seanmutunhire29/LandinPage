@@ -570,6 +570,7 @@ name = "landinpage-server"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
+    { name = "cryptography" },
     { name = "ddgs" },
     { name = "fastapi" },
     { name = "httpx" },
@@ -583,6 +584,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
+    { name = "cryptography", specifier = ">=45.0.0" },
     { name = "ddgs", specifier = ">=9.16.0" },
     { name = "fastapi", specifier = ">=0.141.1" },
     { name = "httpx", specifier = ">=0.28.1" },

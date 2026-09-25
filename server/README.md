@@ -30,7 +30,8 @@ uv run uvicorn app.main:app --reload --port 8000
 ### Supabase
 
 1. Create a project at supabase.com.
-2. **SQL editor** → paste and run `supabase/migrations/0001_init.sql`.
+2. **SQL editor** → paste and run `supabase/migrations/0001_init.sql`, then `0002_portal.sql`
+   (profiles, model settings, encrypted user API keys, free-generation quota).
 3. **Project Settings → API**: copy the URL and the `service_role` key into `server/.env`,
    and the URL and `anon` key into `Client/.env` (`VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`).
 4. **Project Settings → API → JWT**: if the project still uses the legacy JWT secret, copy it into
@@ -57,6 +58,18 @@ Servers connect at startup; one that fails to start is logged and skipped.
   }
 }
 ```
+
+### Models and API keys
+
+Users pick a provider (Claude, OpenAI, DeepSeek, Kimi, OpenRouter) and model under
+**Settings → Models & API keys**, and save their own key per provider (`app/providers.py`).
+
+- A project's first generation runs on `OPENROUTER_API_KEY` / `AGENT_MODEL`, up to
+  `FREE_GENERATIONS` projects per account. If that key is out of credit, the turn falls back
+  to the user's key when they have one.
+- Every later turn (edits) runs on the user's own key for their selected provider and model.
+- Keys are encrypted with `KEY_ENCRYPTION_SECRET` (Fernet) and never returned to the browser.
+  Changing the secret makes saved keys unreadable; users are asked to enter them again.
 
 ## Agent
 

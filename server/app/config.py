@@ -13,6 +13,12 @@ AGENT_MODEL = os.getenv("AGENT_MODEL", "anthropic/claude-haiku-4.5")
 # Haiku 4.5) against the key's credit limit and can reject the request with a 402.
 AGENT_MAX_TOKENS = int(os.getenv("AGENT_MAX_TOKENS", "8000"))
 
+# First generations per account that run on the platform key above. Every later turn
+# (and any first generation past this quota) uses the user's own provider key.
+FREE_GENERATIONS = int(os.getenv("FREE_GENERATIONS", "3"))
+# Fernet key used to encrypt user API keys at rest.
+KEY_ENCRYPTION_SECRET = os.getenv("KEY_ENCRYPTION_SECRET") or None
+
 SUPABASE_URL = (os.getenv("SUPABASE_URL") or "").rstrip("/")
 SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
 SUPABASE_JWT_SECRET = os.getenv("SUPABASE_JWT_SECRET") or None

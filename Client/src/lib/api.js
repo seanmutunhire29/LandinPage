@@ -23,4 +23,13 @@ export const api = {
   listProjects: () => request("/projects"),
   createProject: (body) => request("/projects", { method: "POST", body }),
   getProject: (id) => request(`/projects/${id}`),
+
+  getProfile: () => request("/me/profile"),
+  updateProfile: (body) => request("/me/profile", { method: "PATCH", body }),
+  getSettings: () => request("/me/settings"),
+  updateSettings: (body) => request("/me/settings", { method: "PATCH", body }),
+  saveKey: (provider, apiKey) => request(`/me/keys/${provider}`, { method: "PUT", body: { api_key: apiKey } }),
+  deleteKey: (provider) => request(`/me/keys/${provider}`, { method: "DELETE" }),
+  listProviders: () => request("/providers"),
+  listModels: (provider) => request(`/providers/${provider}/models`),
 }

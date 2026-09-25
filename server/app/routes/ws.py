@@ -9,21 +9,27 @@ Client -> server
   {"type": "ping"}
 
 Server -> client
-  ready {pending} | user_message {message} | turn_start | token {text}
+  ready {pending, model_state {free_available}} | user_message {message}
+  turn_start {model {provider,label,model,source}} | token {text}
   assistant_message {message} | tool_start {id,name,args} | tool_result {id,name,ok,summary}
   file_write {path,content} | command {id,command} | command_cancel {id}
-  turn_done | error {message} | pong
+  turn_done | error {message, code?, reason?, provider?} | pong
+
+error codes: key_required (with reason and provider), invalid_key, out_of_credit,
+platform_depleted, bad_model, rate_limited, provider_error, server_error.
 """
 
 import asyncio
 import logging
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+from openai import APIStatusError
 
-from app import db
+from app import config, db
 from app.agent.bridge import CommandBridge
 from app.agent.loop import AgentContext, ToolError, describe_error, history_from_db, normalize_path, run_turn
 from app.auth import AuthError, verify_token
+from app.providers import KeyRequired, free_generation_available, is_first_generation, resolve_for_turn, user_model
 
 log = logging.getLogger(__name__)
 router = APIRouter()
@@ -37,6 +43,18 @@ def _pending(rows: list[dict]) -> bool:
         if row["role"] in ("user", "assistant"):
             return row["role"] == "user"
     return False
+
+
+def _key_required_message(e: KeyRequired) -> str:
+    label = e.provider.label
+    if e.reason == "tweak":
+        return f"Your site's first version is done. Add your own {label} API key to keep editing it."
+    if e.reason == "quota":
+        n = config.FREE_GENERATIONS
+        return f"You've used your {n} free generation{'s' if n != 1 else ''}. Add your own {label} API key to generate this site."
+    if e.reason == "platform_depleted":
+        return f"The built-in model is out of credit right now. Add your own {label} API key to keep going."
+    return f"Your saved {label} key can't be used any more. Enter it again in Settings."
 
 
 @router.websocket("/ws/projects/{project_id}")
@@ -76,17 +94,39 @@ async def project_socket(ws: WebSocket, project_id: str):
 
     async def run(new_message: str | None) -> None:
         _running.add(project_id)
+        llm = None
         try:
             if new_message is not None:
                 row = await db.add_message(project_id, "user", new_message)
                 await emit({"type": "user_message", "message": row})
             rows = await db.list_messages(project_id)
-            await emit({"type": "turn_start"})
-            await run_turn(ctx, history_from_db(rows))
+            current = await db.get_project(project_id, user.id) or project
+            first = is_first_generation(current, rows)
+            llm = await resolve_for_turn(user.id, project_id, first)
+            await emit({"type": "turn_start", "model": llm.describe()})
+            try:
+                await run_turn(ctx, history_from_db(rows), llm)
+            except APIStatusError as e:
+                if e.status_code != 402 or llm.source != "platform":
+                    raise
+                # The platform key ran dry: carry on with the user's own key if they have one.
+                log.warning("[%s] platform key out of credit, falling back to the user's key", project_id[:8])
+                llm = await user_model(user.id, "platform_depleted")
+                await emit({"type": "turn_start", "model": llm.describe()})
+                await run_turn(ctx, history_from_db(await db.list_messages(project_id)), llm)
+            if first:
+                await db.mark_generation_done(project_id)
+            await emit({"type": "turn_done"})
+        except KeyRequired as e:
+            log.info("[%s] turn needs the user's %s key (%s)", project_id[:8], e.provider.id, e.reason)
+            await emit({"type": "error", "code": "key_required", "reason": e.reason, "provider": e.provider.id, "message": _key_required_message(e)})
             await emit({"type": "turn_done"})
         except Exception as e:
             log.exception("[%s] turn failed", project_id[:8])
-            await emit({"type": "error", "message": describe_error(e)})
+            err = describe_error(e, llm)
+            if llm is not None:
+                err["provider"] = llm.provider.id
+            await emit({"type": "error", **err})
             await emit({"type": "turn_done"})
         finally:
             _running.discard(project_id)
@@ -99,7 +139,9 @@ async def project_socket(ws: WebSocket, project_id: str):
         _running.add(project_id)
         return asyncio.create_task(run(new_message))
 
-    await emit({"type": "ready", "pending": _pending(await db.list_messages(project_id))})
+    rows = await db.list_messages(project_id)
+    free = await free_generation_available(user.id, project, rows)
+    await emit({"type": "ready", "pending": _pending(rows), "model_state": {"free_available": free}})
     log.info("[%s] socket open for user %s", project_id[:8], user.id[:8])
 
     try:

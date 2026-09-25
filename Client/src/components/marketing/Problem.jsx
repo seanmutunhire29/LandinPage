@@ -32,7 +32,7 @@ export function Problem() {
           </h2>
           <p className="mt-6 text-lg leading-relaxed text-white/70 md:text-xl">
             The tools aren't bad. Nobody made the design decisions, so the model filled in the gaps with the average.
-            LandInPage gives you back those decisions.
+            LandinPage gives you back those decisions.
           </p>
         </div>
         <div className="mt-14 grid gap-5 md:grid-cols-3">

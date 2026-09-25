@@ -21,7 +21,7 @@ export function WizardLayout() {
       <div className="min-h-svh bg-brand-mist">
         <header className="sticky top-0 z-40 border-b border-[#e3e5f0] bg-white/90 backdrop-blur">
           <div className="mx-auto flex max-w-6xl items-center gap-6 px-5 py-3 md:px-8">
-            <Link to="/" className="shrink-0" aria-label="LandInPage home">
+            <Link to="/" className="shrink-0" aria-label="LandinPage home">
               <Logo />
             </Link>
             <div className="min-w-0 flex-1">

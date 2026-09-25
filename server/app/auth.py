@@ -6,7 +6,7 @@ Projects still on the legacy shared secret (HS256) use SUPABASE_JWT_SECRET.
 """
 
 import asyncio
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 import jwt
 from fastapi import Depends, HTTPException, status
@@ -22,6 +22,7 @@ _bearer = HTTPBearer(auto_error=False)
 class User:
     id: str
     email: str | None
+    metadata: dict = field(default_factory=dict)  # Supabase user_metadata (full_name, avatar_url, ...)
 
 
 class AuthError(Exception):
@@ -49,7 +50,7 @@ async def verify_token(token: str) -> User:
     claims = await asyncio.to_thread(_decode, token)
     if not claims.get("sub"):
         raise AuthError("token has no subject")
-    return User(id=claims["sub"], email=claims.get("email"))
+    return User(id=claims["sub"], email=claims.get("email"), metadata=claims.get("user_metadata") or {})
 
 
 async def current_user(creds: HTTPAuthorizationCredentials | None = Depends(_bearer)) -> User:

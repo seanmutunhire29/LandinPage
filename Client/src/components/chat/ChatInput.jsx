@@ -11,7 +11,7 @@ function Kbd({ children }) {
  * the card shows what the agent is doing (`activity`) and typing stays open so
  * the next message can be drafted; sending waits until the turn ends.
  */
-export function ChatInput({ onSubmit, busy = false, activity, disabled = false, placeholder, autoFocus, className, initialValue = "" }) {
+export function ChatInput({ onSubmit, busy = false, activity, disabled = false, placeholder, autoFocus, className, initialValue = "", toolbar }) {
   const [value, setValue] = useState(initialValue)
   const ref = useRef(null)
   const ready = Boolean(value.trim()) && !busy && !disabled
@@ -64,7 +64,8 @@ export function ChatInput({ onSubmit, busy = false, activity, disabled = false, 
         className="block max-h-60 min-h-12 w-full resize-none bg-transparent px-3.5 pt-3 pb-1 text-[15px] leading-relaxed text-brand-navy outline-none placeholder:text-[#9699a6] disabled:opacity-50"
         aria-label="Message"
       />
-      <div className="flex items-center gap-2 px-2 pb-2 pl-3.5">
+      <div className={cn("@container flex items-center gap-2 px-2 pb-2", toolbar ? "pl-2" : "pl-3.5")}>
+        {toolbar}
         <div className="min-w-0 flex-1 text-[11px]" aria-live="polite">
           {busy ? (
             <span className="flex min-w-0 items-center gap-1.5 font-semibold text-brand">
@@ -75,7 +76,7 @@ export function ChatInput({ onSubmit, busy = false, activity, disabled = false, 
               <span className="truncate">{activity ?? "Working"}</span>
             </span>
           ) : (
-            <span className="flex items-center gap-1 text-[#9699a6]">
+            <span className={cn("items-center gap-1 text-[#9699a6]", toolbar ? "hidden justify-end @xs:flex" : "flex")}>
               <Kbd>Enter</Kbd> to send <span className="px-0.5">·</span> <Kbd>Shift</Kbd>+<Kbd>Enter</Kbd> new line
             </span>
           )}

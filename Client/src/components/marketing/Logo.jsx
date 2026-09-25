@@ -12,20 +12,16 @@ export function LogoMark({ className }) {
   )
 }
 
-const SIZES = {
-  md: { mark: "size-8", text: "text-lg", gap: "gap-2" },
-  sm: { mark: "size-7", text: "text-[15px]", gap: "gap-2" },
-}
+const SIZES = { md: "h-7", sm: "h-6" }
 
-/** Wordmark: "Land in Page", with the "in" set lighter in brand violet. */
-export function Logo({ className, light, size = "md" }) {
-  const s = SIZES[size]
+/** Wordmark image from public/logo.png. The PNG has an off-white background, so multiply blends it into light surfaces. */
+export function Logo({ className, size = "md" }) {
   return (
-    <span className={cn("inline-flex items-center", s.gap, className)}>
-      <LogoMark className={s.mark} />
-      <span className={cn("font-display font-bold tracking-[-0.02em]", s.text, light ? "text-white" : "text-brand-navy")}>
-        Land<span className={cn("px-[0.04em] font-medium", light ? "text-[#a9a9ff]" : "text-brand")}>in</span>Page
-      </span>
-    </span>
+    <img
+      src="/logo.png"
+      alt="LandinPage"
+      className={cn("inline-block w-auto shrink-0 select-none mix-blend-multiply", SIZES[size], className)}
+      draggable={false}
+    />
   )
 }

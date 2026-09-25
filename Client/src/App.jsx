@@ -14,6 +14,8 @@ import { ScrollToTop } from "@/components/ScrollToTop"
 import { RequireAuth } from "@/components/auth/RequireAuth"
 import Projects from "@/pages/Projects"
 import AuthCallback from "@/pages/AuthCallback"
+import Profile from "@/pages/Profile"
+import Settings from "@/pages/Settings"
 
 // Monaco + WebContainer code only loads when a project is opened.
 const Workspace = lazy(() => import("@/pages/Workspace"))
@@ -37,6 +39,23 @@ export default function App() {
         </Route>
         <Route path="/auth/callback" element={<AuthCallback />} />
         <Route path="/projects" element={<Projects />} />
+        <Route
+          path="/profile"
+          element={
+            <RequireAuth>
+              <Profile />
+            </RequireAuth>
+          }
+        />
+        <Route path="/settings" element={<Navigate to="/settings/profile" replace />} />
+        <Route
+          path="/settings/:section"
+          element={
+            <RequireAuth>
+              <Settings />
+            </RequireAuth>
+          }
+        />
         {/* Direct sign-in link: the projects page shows sign-in when logged out. */}
         <Route path="/login" element={<Navigate to="/projects" replace />} />
         <Route

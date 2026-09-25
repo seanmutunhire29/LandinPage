@@ -3,12 +3,10 @@ import { Link } from "react-router-dom"
 import { FolderOpen, Loader2, Plus } from "lucide-react"
 import { useAuthStore } from "@/store/useAuthStore"
 import { api } from "@/lib/api"
-import { Logo } from "@/components/marketing/Logo"
-import { UserMenu } from "@/components/auth/UserMenu"
+import { AppHeader } from "@/components/account/AppHeader"
 import { AuthDialog } from "@/components/auth/AuthDialog"
 import { Button } from "@/components/ui/button"
-
-const formatDate = (iso) => new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })
+import { ProjectCard } from "@/components/projects/ProjectCard"
 
 export default function Projects() {
   const ready = useAuthStore((s) => s.ready)
@@ -24,14 +22,7 @@ export default function Projects() {
 
   return (
     <div className="min-h-svh bg-brand-mist">
-      <header className="border-b border-[#e3e5f0] bg-white">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-5 py-3 md:px-8">
-          <Link to="/" aria-label="LandInPage home">
-            <Logo />
-          </Link>
-          <UserMenu />
-        </div>
-      </header>
+      <AppHeader />
 
       <main className="mx-auto max-w-5xl px-5 py-10 md:px-8">
         <div className="mb-8 flex items-end justify-between gap-4">
@@ -73,10 +64,7 @@ export default function Projects() {
           <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {projects.map((p) => (
               <li key={p.id}>
-                <Link to={`/projects/${p.id}`} className="flex h-full flex-col gap-2 rounded-2xl bg-white p-5 ring-1 ring-[#e3e5f0] transition-all hover:-translate-y-0.5 hover:ring-brand/40">
-                  <span className="line-clamp-2 font-display font-semibold text-brand-navy">{p.name}</span>
-                  <span className="mt-auto text-xs text-[#9699a6]">Edited {formatDate(p.updated_at)}</span>
-                </Link>
+                <ProjectCard project={p} />
               </li>
             ))}
           </ul>

@@ -9,7 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app import config
 from app.auth import User, current_user
 from app.integrations.mcp_client import mcp_manager
-from app.routes import projects, ws
+from app.routes import account, projects, ws
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 
@@ -32,6 +32,7 @@ app.add_middleware(
 )
 
 app.include_router(projects.router)
+app.include_router(account.router)
 app.include_router(ws.router)
 
 

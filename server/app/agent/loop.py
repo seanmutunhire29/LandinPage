@@ -1,6 +1,7 @@
 """Agent loop. Grew out of the original single-shot CLI (server/main.py): same
-OpenRouter client pattern, same Read/Write/Bash tool structure, now an async
-function run once per chat turn on top of the project's stored conversation.
+OpenAI-compatible client pattern, same Read/Write/Bash tool structure, now an async
+function run once per chat turn on top of the project's stored conversation. The
+provider, model and key for a turn come from app.providers.
 
 - Write/Edit persist to project_files and stream a file_write event to the browser.
 - Bash does not run on the server; it is bridged to the user's WebContainer.
@@ -15,18 +16,16 @@ from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from pathlib import PurePosixPath
 
-from openai import APIConnectionError, APIStatusError, AsyncOpenAI
+from openai import APIConnectionError, APIStatusError
 
 from app import config, db
 from app.agent.bridge import CommandBridge
 from app.agent.prompts import build_system_prompt
 from app.integrations.mcp_client import mcp_manager
 from app.integrations.search import web_search
+from app.providers import ResolvedModel
 
 log = logging.getLogger(__name__)
-
-API_KEY = config.OPENROUTER_API_KEY
-BASE_URL = config.OPENROUTER_BASE_URL
 
 MAX_ITERATIONS = 30        # model round-trips per turn
 MAX_READ_CHARS = 60_000    # cap on what a single Read returns to the model
@@ -41,18 +40,6 @@ class AgentContext:
     design_spec: dict
     emit: Emit
     bridge: CommandBridge
-
-
-_client: AsyncOpenAI | None = None
-
-
-def get_client() -> AsyncOpenAI:
-    global _client
-    if _client is None:
-        if not API_KEY:
-            raise RuntimeError("OPENROUTER_API_KEY is not set")
-        _client = AsyncOpenAI(api_key=API_KEY, base_url=BASE_URL)
-    return _client
 
 
 # ---------------------------------------------------------------------------
@@ -286,15 +273,15 @@ async def tool_call(ctx: AgentContext, tool_calls: list[dict]) -> list[dict]:
 # Model call
 # ---------------------------------------------------------------------------
 
-async def llm_call(client: AsyncOpenAI, msg: list[dict], tools: list[dict], on_token: Emit) -> dict:
+async def llm_call(llm: ResolvedModel, msg: list[dict], tools: list[dict], on_token: Emit) -> dict:
     """Streaming chat completion. Emits text tokens as they arrive and returns
     the assembled assistant message (content + all tool calls)."""
-    stream = await client.chat.completions.create(
-        model=config.AGENT_MODEL,
+    stream = await llm.client.chat.completions.create(
+        model=llm.model,
         messages=msg,
         tools=tools,
-        max_tokens=config.AGENT_MAX_TOKENS,
         stream=True,
+        **{llm.max_tokens_param: config.AGENT_MAX_TOKENS},
     )
     content: list[str] = []
     calls: dict[int, dict] = {}
@@ -330,22 +317,29 @@ async def llm_call(client: AsyncOpenAI, msg: list[dict], tools: list[dict], on_t
     return message
 
 
-def describe_error(e: Exception) -> str:
-    """Short, user-facing description of a failed turn. Full details go to the log."""
+def describe_error(e: Exception, llm: ResolvedModel | None = None) -> dict:
+    """Short, user-facing description of a failed turn as {code, message}. Full
+    details go to the log."""
+    name = llm.provider.label if llm else "The model provider"
+    own = llm is not None and llm.source == "user"
     if isinstance(e, APIStatusError):
         if e.status_code == 402:
-            return (
-                "The model provider declined the request: the OpenRouter key doesn't have enough credit "
-                "for it. Add credits or raise the key's limit, or lower AGENT_MAX_TOKENS in server/.env."
-            )
-        if e.status_code == 401:
-            return "The model provider rejected the API key. Check OPENROUTER_API_KEY in server/.env."
+            if own:
+                return {"code": "out_of_credit", "message": f"Your {name} account doesn't have enough credit for this request. Top it up, or switch to another provider in Settings."}
+            return {"code": "platform_depleted", "message": "The built-in model is out of credit. Add your own API key in Settings to keep going."}
+        if e.status_code in (401, 403):
+            if own:
+                return {"code": "invalid_key", "message": f"{name} rejected your API key. Replace it in Settings, then try again."}
+            return {"code": "provider_error", "message": "The built-in model's API key was rejected. Check OPENROUTER_API_KEY in server/.env."}
+        if e.status_code == 404:
+            model = llm.model if llm else "the selected model"
+            return {"code": "bad_model", "message": f"{name} doesn't offer {model}, or your key can't use it. Pick another model and try again."}
         if e.status_code == 429:
-            return "The model provider is rate limiting requests. Wait a moment and send your message again."
-        return f"The model provider returned an error ({e.status_code}). Try sending your message again."
+            return {"code": "rate_limited", "message": f"{name} is rate limiting requests. Wait a moment and send your message again."}
+        return {"code": "provider_error", "message": f"{name} returned an error ({e.status_code}). Try sending your message again."}
     if isinstance(e, APIConnectionError):
-        return "Couldn't reach the model provider. Check the server's network connection and try again."
-    return f"Something went wrong on our side ({type(e).__name__}). Try sending your message again."
+        return {"code": "provider_error", "message": f"Couldn't reach {name}. Check the server's network connection and try again."}
+    return {"code": "server_error", "message": f"Something went wrong on our side ({type(e).__name__}). Try sending your message again."}
 
 
 # ---------------------------------------------------------------------------
@@ -368,20 +362,19 @@ def history_from_db(rows: list[dict]) -> list[dict]:
     return history
 
 
-async def run_turn(ctx: AgentContext, history: list[dict]) -> str:
+async def run_turn(ctx: AgentContext, history: list[dict], llm: ResolvedModel) -> str:
     """Run one chat turn. `history` is the prior conversation in OpenAI format,
     ending with the (already persisted) user message for this turn. New
     assistant and tool messages are persisted as they happen. Returns the
     final assistant text."""
-    client = get_client()
     files = await db.list_files(ctx.project_id)
     messages = [{"role": "system", "content": build_system_prompt(ctx.design_spec, [f["file_path"] for f in files])}]
     messages += history
     tools = available_tools + mcp_manager.tool_schemas()
 
     for iteration in range(1, MAX_ITERATIONS + 1):
-        log.info("[%s] iteration %d", ctx.project_id[:8], iteration)
-        message = await llm_call(client, messages, tools, ctx.emit)
+        log.info("[%s] iteration %d (%s %s, %s key)", ctx.project_id[:8], iteration, llm.provider.id, llm.model, llm.source)
+        message = await llm_call(llm, messages, tools, ctx.emit)
         messages.append(message)
 
         row = await db.add_message(ctx.project_id, "assistant", message.get("content", ""), tool_calls=message.get("tool_calls"))

@@ -3,6 +3,7 @@ name = "landinpage-server"
 version = "0.1.0"
 requires-python = ">=3.11"
 dependencies = [
+    "cryptography>=45.0.0",
     "ddgs>=9.16.0",
     "fastapi>=0.141.1",
     "httpx>=0.28.1",

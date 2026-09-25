@@ -20,7 +20,7 @@ export function buildSpec(state) {
 
   return {
     meta: {
-      tool: "LandInPage",
+      tool: "LandinPage",
       specVersion: "0.1.0",
       scope: "landing-page",
       direction: { id: direction.id, name: direction.name },

@@ -133,7 +133,7 @@ export function MessageList({ messages, streaming = "", working = false, tools =
         ) : (
           <div key={t.id} className="grid min-w-0 grid-cols-[1.5rem_minmax(0,1fr)] gap-x-2.5">
             <LogoMark className="size-6" />
-            <p className="self-center font-display text-[13px] font-semibold text-brand-navy">LandInPage</p>
+            <p className="self-center font-display text-[13px] font-semibold text-brand-navy">LandinPage</p>
             <span className="mx-auto mt-1.5 w-px bg-gradient-to-b from-[#e3e5f0] to-transparent" aria-hidden />
             <div className="flex min-w-0 flex-col gap-2.5 pt-1.5 pb-1">
               {t.items.map((m) => (

@@ -14,6 +14,10 @@ const initial = {
   previewUrl: null,
   terminal: [], // { id, command, source: "agent" | "system", status, exitCode, output }
   error: null,
+  errorCode: null, // key_required | invalid_key | out_of_credit | platform_depleted | bad_model | ... (see server ws.py)
+  errorReason: null, // for key_required: tweak | quota | platform_depleted | invalid_key
+  turnModel: null, // { provider, label, model, source: "platform" | "user" } of the running turn
+  freeAvailable: null, // whether the next turn can run on the free platform key (null until the socket is ready)
 }
 
 export const useWorkspaceStore = create((set) => ({

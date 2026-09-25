@@ -25,13 +25,14 @@ export function useProjectSession(projectId) {
       const st = useWorkspaceStore.getState()
       switch (e.type) {
         case "ready":
+          useWorkspaceStore.setState({ freeAvailable: e.model_state?.free_available ?? null })
           if (e.pending) socket.current.send({ type: "resume" })
           break
         case "user_message":
           st.addMessage(e.message)
           break
         case "turn_start":
-          useWorkspaceStore.setState({ turnRunning: true, streaming: "", error: null })
+          useWorkspaceStore.setState({ turnRunning: true, streaming: "", error: null, errorCode: null, errorReason: null, turnModel: e.model ?? null })
           break
         case "token":
           st.appendToken(e.text)
@@ -60,10 +61,16 @@ export function useProjectSession(projectId) {
           cancelCommand(e.id)
           break
         case "turn_done":
-          useWorkspaceStore.setState({ turnRunning: false, streaming: "" })
+          // A turn that finished cleanly used up the project's first generation.
+          useWorkspaceStore.setState((s) => ({ turnRunning: false, streaming: "", freeAvailable: s.error ? s.freeAvailable : false }))
           break
         case "error":
-          useWorkspaceStore.setState({ error: e.message })
+          useWorkspaceStore.setState((s) => ({
+            error: e.message,
+            errorCode: e.code ?? null,
+            errorReason: e.reason ?? null,
+            freeAvailable: e.code === "key_required" ? false : s.freeAvailable,
+          }))
           break
       }
     }
@@ -95,7 +102,7 @@ export function useProjectSession(projectId) {
   }, [])
 
   const retry = useCallback(() => {
-    useWorkspaceStore.setState({ error: null })
+    useWorkspaceStore.setState({ error: null, errorCode: null, errorReason: null })
     socket.current?.send({ type: "resume" })
   }, [])
 
