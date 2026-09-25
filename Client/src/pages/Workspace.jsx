@@ -9,6 +9,7 @@ import { ChatPanel } from "@/components/chat/ChatPanel"
 import { FileTree } from "@/components/workspace/FileTree"
 import { CodeEditor } from "@/components/workspace/CodeEditor"
 import { Preview } from "@/components/workspace/Preview"
+import { ViewSwitch } from "@/components/workspace/ViewSwitch"
 import { Terminal } from "@/components/workspace/Terminal"
 import { UserMenu } from "@/components/auth/UserMenu"
 import { Logo } from "@/components/marketing/Logo"
@@ -91,22 +92,7 @@ export default function Workspace() {
           </span>
         )}
         <div className="ml-auto flex items-center gap-3">
-          <div className="flex rounded-lg bg-[#f1f2f8] p-0.5" role="radiogroup" aria-label="Layout">
-            {VIEWS.map(({ id, label, Icon }) => (
-              <button
-                key={id}
-                role="radio"
-                aria-checked={view === id}
-                onClick={() => setView(id)}
-                className={cn(
-                  "inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-semibold",
-                  view === id ? "bg-white text-brand-navy shadow-sm" : "text-[#676879] hover:text-brand-navy"
-                )}
-              >
-                <Icon className="size-3.5" /> <span className="hidden md:inline">{label}</span>
-              </button>
-            ))}
-          </div>
+          <ViewSwitch options={VIEWS} value={view} onChange={setView} label="Layout" />
           <UserMenu />
         </div>
       </header>
