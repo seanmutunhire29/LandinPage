@@ -1,0 +1,15 @@
+[project]
+name = "landinpage-server"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = [
+    "ddgs>=9.16.0",
+    "fastapi>=0.141.1",
+    "httpx>=0.28.1",
+    "mcp>=2.2.0",
+    "openai>=3.19.2",
+    "pyjwt[crypto]>=2.15.0",
+    "python-dotenv>=1.2.3",
+    "supabase>=2.31.0",
+    "uvicorn[standard]>=0.54.0",
+]
