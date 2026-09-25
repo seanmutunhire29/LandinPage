@@ -4,6 +4,7 @@ Client -> server
   {"type": "auth", "token": "<supabase access token>"}      must be the first message
   {"type": "chat", "content": "..."}                         new user message, starts a turn
   {"type": "resume"}                                         run a turn on a pending user message
+  {"type": "file_save", "path", "content"}                   user edit / container-side change to persist
   {"type": "command_result", "id", "exit_code", "output", "error"?}
   {"type": "ping"}
 
@@ -21,7 +22,7 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
 from app import db
 from app.agent.bridge import CommandBridge
-from app.agent.loop import AgentContext, history_from_db, run_turn
+from app.agent.loop import AgentContext, ToolError, history_from_db, normalize_path, run_turn
 from app.auth import AuthError, verify_token
 
 log = logging.getLogger(__name__)
@@ -111,6 +112,14 @@ async def project_socket(ws: WebSocket, project_id: str):
                 content = (msg.get("content") or "").strip()
                 if content:
                     turn = start(content)
+            elif kind == "file_save":
+                # User edits in the editor, or package.json changed by a command in the container.
+                try:
+                    path = normalize_path(msg.get("path"))
+                except ToolError as e:
+                    await emit({"type": "error", "message": f"Could not save file: {e}"})
+                    continue
+                await db.upsert_file(project_id, path, str(msg.get("content", "")))
             elif kind == "resume":
                 if _pending(await db.list_messages(project_id)):
                     turn = start(None)

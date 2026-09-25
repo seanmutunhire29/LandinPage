@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react"
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom"
 import Marketing from "@/pages/Marketing"
 import { WizardLayout } from "@/components/wizard/WizardLayout"
@@ -10,6 +11,10 @@ import Layout from "@/pages/onboarding/Layout"
 import Motion from "@/pages/onboarding/Motion"
 import Review from "@/pages/onboarding/Review"
 import { ScrollToTop } from "@/components/ScrollToTop"
+import { RequireAuth } from "@/components/auth/RequireAuth"
+
+// Monaco + WebContainer code only loads when a project is opened.
+const Workspace = lazy(() => import("@/pages/Workspace"))
 
 export default function App() {
   return (
@@ -28,6 +33,16 @@ export default function App() {
           <Route path="motion" element={<Motion />} />
           <Route path="review" element={<Review />} />
         </Route>
+        <Route
+          path="/projects/:projectId"
+          element={
+            <RequireAuth>
+              <Suspense fallback={<div className="h-svh bg-brand-mist" />}>
+                <Workspace />
+              </Suspense>
+            </RequireAuth>
+          }
+        />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
