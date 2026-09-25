@@ -1,5 +1,6 @@
 import { Fragment, useEffect, useRef } from "react"
 import { AlertCircle, CheckCircle2, CircleDashed, FilePen, FilePlus2, FileSearch, Globe, Loader2, Plug, Sparkles, SquareTerminal, XCircle } from "lucide-react"
+import { LogoMark } from "@/components/marketing/Logo"
 import { cn } from "@/lib/utils"
 
 /** Minimal inline formatting for agent replies: `code` and **bold**. */
@@ -110,31 +111,54 @@ export function MessageList({ messages, streaming = "", working = false, tools =
     end.current?.scrollIntoView({ block: "end", behavior: "smooth" })
   }, [visible.length, streaming, working, tools])
 
+  // Consecutive assistant messages (text, tool calls, the live stream) form one agent turn.
+  const turns = []
+  for (const m of visible) {
+    if (m.role === "assistant" && turns.at(-1)?.role === "assistant") turns.at(-1).items.push(m)
+    else turns.push(m.role === "user" ? m : { id: m.id, role: "assistant", items: [m] })
+  }
+  if ((streaming || working) && turns.at(-1)?.role !== "assistant") turns.push({ id: "live", role: "assistant", items: [] })
+  const lastTurn = turns.at(-1)
+
   return (
-    <div className={cn("flex min-w-0 flex-col gap-4 [overflow-wrap:anywhere]", className)}>
-      {visible.map((m) =>
-        m.role === "user" ? (
-          <div key={m.id} className="ml-8 max-w-full self-end rounded-2xl rounded-br-md bg-brand px-4 py-2.5 text-[15px] whitespace-pre-wrap text-white">
-            {m.content}
+    <div className={cn("flex min-w-0 flex-col gap-5 [overflow-wrap:anywhere]", className)}>
+      {turns.map((t) =>
+        t.role === "user" ? (
+          <div
+            key={t.id}
+            className="ml-10 max-w-full self-end rounded-xl rounded-tr-sm bg-secondary px-3.5 py-2.5 text-[15px] leading-relaxed whitespace-pre-wrap text-brand-navy shadow-[0_1px_2px_rgb(24_27_52/0.06)] ring-1 ring-brand/10"
+          >
+            {t.content}
           </div>
         ) : (
-          <div key={m.id} className="mr-4 flex min-w-0 flex-col gap-2">
-            {m.content && <div className="text-[15px] leading-relaxed whitespace-pre-wrap text-brand-navy">{formatText(m.content)}</div>}
-            {m.tool_calls?.length > 0 && (
-              <ul className="flex flex-col gap-1.5">
-                {m.tool_calls.map((call) => (
-                  <ToolCard key={call.id} call={call} live={tools[call.id]} status={statusOf(call)} />
-                ))}
-              </ul>
-            )}
+          <div key={t.id} className="grid min-w-0 grid-cols-[1.5rem_minmax(0,1fr)] gap-x-2.5">
+            <LogoMark className="size-6" />
+            <p className="self-center font-display text-[13px] font-semibold text-brand-navy">LandInPage</p>
+            <span className="mx-auto mt-1.5 w-px bg-gradient-to-b from-[#e3e5f0] to-transparent" aria-hidden />
+            <div className="flex min-w-0 flex-col gap-2.5 pt-1.5 pb-1">
+              {t.items.map((m) => (
+                <Fragment key={m.id}>
+                  {m.content && <div className="text-[15px] leading-relaxed whitespace-pre-wrap text-brand-navy">{formatText(m.content)}</div>}
+                  {m.tool_calls?.length > 0 && (
+                    <ul className="flex flex-col gap-1.5">
+                      {m.tool_calls.map((call) => (
+                        <ToolCard key={call.id} call={call} live={tools[call.id]} status={statusOf(call)} />
+                      ))}
+                    </ul>
+                  )}
+                </Fragment>
+              ))}
+              {t === lastTurn && streaming && <div className="text-[15px] leading-relaxed whitespace-pre-wrap text-brand-navy">{formatText(streaming)}</div>}
+              {t === lastTurn && working && !streaming && (
+                <div className="flex items-center gap-1 py-1" role="status" aria-label="Working">
+                  {[0, 150, 300].map((d) => (
+                    <span key={d} className="size-1.5 animate-bounce rounded-full bg-brand/60" style={{ animationDelay: `${d}ms` }} />
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         )
-      )}
-      {streaming && <div className="mr-4 text-[15px] leading-relaxed whitespace-pre-wrap text-brand-navy">{formatText(streaming)}</div>}
-      {working && !streaming && (
-        <div className="flex items-center gap-2 text-sm text-[#676879]">
-          <Loader2 className="size-4 animate-spin text-brand" /> Working...
-        </div>
       )}
       {error && (
         <div role="alert" className="flex min-w-0 items-start gap-2 rounded-xl bg-[#fff0f2] px-3 py-2.5 text-sm text-[#b3263e] ring-1 ring-[#ffd0d8]">
