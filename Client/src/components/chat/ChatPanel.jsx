@@ -2,6 +2,15 @@ import { useWorkspaceStore } from "@/store/useWorkspaceStore"
 import { MessageList } from "./MessageList"
 import { ChatInput } from "./ChatInput"
 
+const basename = (p = "") => p.split("/").pop()
+const ACTIVITY = {
+  Read: (a) => `reading ${basename(a.file_path)}`,
+  Write: (a) => `writing ${basename(a.file_path)}`,
+  Edit: (a) => `editing ${basename(a.file_path)}`,
+  Bash: (a) => `running ${a.command ?? "a command"}`,
+  WebSearch: () => "searching the web",
+}
+
 /** Workspace chat: conversation history plus an input for edit instructions. */
 export function ChatPanel({ onSend, onRetry }) {
   const messages = useWorkspaceStore((s) => s.messages)
@@ -11,6 +20,8 @@ export function ChatPanel({ onSend, onRetry }) {
   const error = useWorkspaceStore((s) => s.error)
   const connection = useWorkspaceStore((s) => s.connection)
   // The last message is an unanswered user turn: the server can resume it as-is.
+  const running = Object.values(tools).findLast((t) => t.status === "running")
+  const activity = !turnRunning ? undefined : running ? (ACTIVITY[running.name]?.(running.args ?? {}) ?? `using ${running.name}`) : streaming ? "replying" : "thinking"
   const canRetry = Boolean(error) && !turnRunning && messages.filter((m) => m.role !== "tool").at(-1)?.role === "user"
 
   return (
@@ -20,7 +31,7 @@ export function ChatPanel({ onSend, onRetry }) {
       </div>
       <div className="shrink-0 border-t border-[#e3e5f0] p-3">
         {connection === "closed" && <p className="mb-2 text-xs text-[#9699a6]">Reconnecting...</p>}
-        <ChatInput onSubmit={onSend} busy={turnRunning} placeholder="Describe a change, e.g. make the hero headline bolder" />
+        <ChatInput onSubmit={onSend} busy={turnRunning} activity={activity && `LandInPage is ${activity}`} placeholder="Describe a change, e.g. make the hero headline bolder" />
       </div>
     </div>
   )
