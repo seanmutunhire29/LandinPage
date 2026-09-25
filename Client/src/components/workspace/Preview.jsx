@@ -1,13 +1,7 @@
-import { AlertTriangle, ExternalLink, Loader2, RotateCw } from "lucide-react"
+import { AlertTriangle, ExternalLink, RotateCw } from "lucide-react"
 import { useWorkspaceStore } from "@/store/useWorkspaceStore"
 import { reloadPreview } from "@/webcontainer/runtime"
-
-const STATUS_TEXT = {
-  idle: "Waiting for project files...",
-  booting: "Starting the in-browser runtime...",
-  installing: "Installing dependencies...",
-  starting: "Starting the dev server...",
-}
+import { BuildProgress } from "./BuildProgress"
 
 export function Preview() {
   const url = useWorkspaceStore((s) => s.previewUrl)
@@ -36,7 +30,7 @@ export function Preview() {
       <div className="relative min-h-0 flex-1">
         {url && <iframe key={url} src={url} title="Live preview" className="size-full border-0" allow="clipboard-write" />}
         {!url && (
-          <div className="absolute inset-0 grid place-items-center p-6 text-center">
+          <div className="absolute inset-0 grid place-items-center overflow-y-auto bg-brand-mist p-6 text-center">
             {runtime.status === "error" ? (
               <div className="flex max-w-sm flex-col items-center gap-2 text-sm text-[#676879]">
                 <AlertTriangle className="size-6 text-brand-red" />
@@ -44,10 +38,7 @@ export function Preview() {
                 <p>{runtime.error}</p>
               </div>
             ) : (
-              <div className="flex flex-col items-center gap-3 text-sm text-[#676879]">
-                <Loader2 className="size-6 animate-spin text-brand" />
-                {STATUS_TEXT[runtime.status] ?? "Loading..."}
-              </div>
+              <BuildProgress />
             )}
           </div>
         )}
