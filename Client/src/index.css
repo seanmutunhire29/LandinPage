@@ -48,6 +48,13 @@
   --color-brand-blue: #579bfc;
   --color-brand-navy: #181b34;
   --color-brand-mist: #f6f7fb;
+
+  /* Workspace tool-call accents, drawn from the brand palette */
+  --color-tool-read: #579bfc;
+  --color-tool-write: #6161ff;
+  --color-tool-bash: #181b34;
+  --color-tool-web: #c79400;
+  --color-tool-mcp: #676879;
 }
 
 :root {
@@ -129,6 +136,12 @@
 @keyframes dp-float {
   0%, 100% { transform: translateY(0) rotate(var(--dp-rot, 0deg)); }
   50% { transform: translateY(-10px) rotate(var(--dp-rot, 0deg)); }
+}
+
+/* Workspace: indeterminate progress sweep for running tool calls */
+@keyframes dp-sweep {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(250%); }
 }
 
 @media (prefers-reduced-motion: reduce) {
