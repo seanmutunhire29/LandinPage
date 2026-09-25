@@ -31,4 +31,23 @@ uv run uvicorn app.main:app --reload --port 8000
 
 ### MCP servers
 
-`mcp_servers.json` lists MCP servers whose tools are exposed to the agent. See the file for the format.
+`mcp_servers.json` lists MCP servers whose tools are exposed to the agent as `mcp__<server>__<tool>`.
+Servers connect at startup; one that fails to start is logged and skipped.
+
+```json
+{
+  "mcpServers": {
+    "fetch":  { "command": "uvx", "args": ["mcp-server-fetch"] },
+    "remote": { "url": "https://example.com/mcp" },
+    "paused": { "command": "npx", "args": ["some-server"], "disabled": true }
+  }
+}
+```
+
+## Agent
+
+`app/agent/loop.py` (the evolved `main.py`) runs one chat turn per call:
+Read / Write / Edit persist to `project_files`, Bash is bridged to the browser's
+WebContainer over the WebSocket, WebSearch uses DuckDuckGo, plus any MCP tools.
+Generated projects start from `app/agent/template.py` (Vite 5 + React + Tailwind 3,
+tokens from the design spec).

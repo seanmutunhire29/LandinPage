@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
 from app import db
+from app.agent.template import build_template
 from app.auth import User, current_user
 
 router = APIRouter(prefix="/projects", tags=["projects"])
@@ -26,6 +27,7 @@ async def list_projects(user: User = Depends(current_user)):
 @router.post("", status_code=201)
 async def create_project(body: CreateProject, user: User = Depends(current_user)):
     project = await db.create_project(user.id, body.name or _name_from(body.first_message), body.design_spec)
+    await db.upsert_files(project["id"], build_template(body.design_spec, project["name"]))
     # The first message is stored as a pending user turn; generation starts when
     # the workspace connects over the WebSocket and asks to resume it.
     await db.add_message(project["id"], "user", body.first_message)
