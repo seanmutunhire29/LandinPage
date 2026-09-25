@@ -1,0 +1,140 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * Fonts, colors and radius resolve through CSS variables at the element level
+ * (@theme inline), so <ThemeScope> can re-skin any subtree of shadcn components
+ * with the user's chosen palette, typography and surface.
+ */
+@theme inline {
+  --font-sans: var(--app-font-body);
+  --font-heading: var(--app-font-heading);
+  --font-display: "Poppins", var(--app-font-body);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-foreground: var(--foreground);
+  --color-background: var(--background);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+
+  /* DesignPath brand (marketing page + wizard chrome) */
+  --color-brand: #6161ff;
+  --color-brand-dark: #4b4bd6;
+  --color-brand-red: #ff3d57;
+  --color-brand-yellow: #ffcb00;
+  --color-brand-green: #00ca72;
+  --color-brand-blue: #579bfc;
+  --color-brand-navy: #181b34;
+  --color-brand-mist: #f6f7fb;
+}
+
+:root {
+  --app-font-body: "Figtree", ui-sans-serif, system-ui, sans-serif;
+  --app-font-heading: "Poppins", "Figtree", ui-sans-serif, sans-serif;
+  --background: #ffffff;
+  --foreground: #181b34;
+  --card: #ffffff;
+  --card-foreground: #181b34;
+  --popover: #ffffff;
+  --popover-foreground: #181b34;
+  --primary: #6161ff;
+  --primary-foreground: #ffffff;
+  --secondary: #eef0fb;
+  --secondary-foreground: #181b34;
+  --muted: #f1f2f8;
+  --muted-foreground: #676879;
+  --accent: #eef0fb;
+  --accent-foreground: #181b34;
+  --destructive: #e2445c;
+  --border: #e3e5f0;
+  --input: #d7d9e6;
+  --ring: #6161ff;
+  --radius: 0.75rem;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+  }
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+  html {
+    @apply font-sans;
+  }
+}
+
+/* Grain overlay used by the "Textured/grain" surface. */
+.dp-grain {
+  position: relative;
+  isolation: isolate;
+}
+.dp-grain::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0.22;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* Motion stage demos */
+@keyframes dp-fade-up {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes dp-pop {
+  0% { opacity: 0; transform: scale(0.6); }
+  100% { opacity: 1; transform: scale(1); }
+}
+@keyframes dp-morph {
+  0%, 100% { border-radius: 42% 58% 70% 30% / 45% 45% 55% 55%; transform: rotate(0deg); }
+  50% { border-radius: 70% 30% 46% 54% / 30% 29% 71% 70%; transform: rotate(90deg); }
+}
+@keyframes dp-caret {
+  50% { opacity: 0; }
+}
+@keyframes dp-marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+@keyframes dp-float {
+  0%, 100% { transform: translateY(0) rotate(var(--dp-rot, 0deg)); }
+  50% { transform: translateY(-10px) rotate(var(--dp-rot, 0deg)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

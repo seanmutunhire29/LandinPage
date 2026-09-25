@@ -1,0 +1,217 @@
+// Stage 3: Surface, radius and shadow. Each preset is the material a card,
+// button or container is made of. `card(c)` / `control(c)` return inline styles
+// for a palette's colors `c`; the same values are written into the spec tokens.
+
+import { mix, rgba, isDark } from "@/lib/color"
+
+const layeredShadow = (tone, a) =>
+  [1, 2, 4, 8, 16].map((d) => `0 ${d}px ${d}px ${rgba(tone, a)}`).join(", ")
+
+const gradientOf = (c, gradient) => gradient ?? `linear-gradient(135deg, ${c.primary}, ${c.accent})`
+
+export const SURFACES = [
+  {
+    id: "flat",
+    name: "Flat",
+    blurb: "No shadow, solid fill, hard or slightly rounded corners.",
+    radius: 6,
+    blur: 0,
+    texture: false,
+    card: (c) => ({ background: mix(c.surface, c.text, 4), border: "none", boxShadow: "none" }),
+    control: () => ({ boxShadow: "none" }),
+    border: () => "none",
+    shadow: () => "none",
+  },
+  {
+    id: "soft-shadow",
+    name: "Soft shadow",
+    blurb: "Low elevation, subtle blur, small-to-medium radius.",
+    radius: 10,
+    blur: 0,
+    texture: false,
+    card: (c) => ({
+      background: c.surface,
+      border: `1px solid ${rgba(c.border, 0.7)}`,
+      boxShadow: `0 1px 2px ${rgba(c.text, 0.06)}, 0 4px 14px ${rgba(c.text, 0.08)}`,
+    }),
+    control: (c) => ({ boxShadow: `0 1px 2px ${rgba(c.text, 0.1)}, 0 2px 6px ${rgba(c.text, 0.08)}` }),
+    border: (c) => `1px solid ${c.border}`,
+    shadow: (c) => `0 1px 2px ${rgba(c.text, 0.06)}, 0 4px 14px ${rgba(c.text, 0.08)}`,
+  },
+  {
+    id: "glass",
+    name: "Glass",
+    blurb: "Translucent fill, background blur, thin light border, medium-high radius.",
+    radius: 16,
+    blur: 14,
+    texture: false,
+    backdrop: true,
+    card: (c) => ({
+      background: `color-mix(in srgb, ${c.surface} 55%, transparent)`,
+      backdropFilter: "blur(14px) saturate(140%)",
+      WebkitBackdropFilter: "blur(14px) saturate(140%)",
+      border: "1px solid rgba(255,255,255,0.4)",
+      boxShadow: "0 8px 32px rgba(15, 23, 42, 0.14)",
+    }),
+    control: () => ({ boxShadow: "inset 0 1px 0 rgba(255,255,255,0.35), 0 4px 14px rgba(15,23,42,0.12)" }),
+    border: () => "1px solid rgba(255,255,255,0.4)",
+    shadow: () => "0 8px 32px rgba(15, 23, 42, 0.14)",
+  },
+  {
+    id: "clay",
+    name: "Clay",
+    blurb: "Inflated look, soft large shadow, inner highlight, high radius.",
+    radius: 26,
+    fixedRadius: true,
+    blur: 0,
+    texture: false,
+    card: (c) => ({
+      background: c.surface,
+      border: "none",
+      boxShadow: `14px 14px 28px ${rgba(c.text, 0.14)}, inset -8px -8px 16px ${rgba(c.text, 0.08)}, inset 8px 8px 16px rgba(255,255,255,0.75)`,
+    }),
+    control: (c) => ({
+      boxShadow: `6px 6px 14px ${rgba(c.text, 0.18)}, inset -4px -4px 8px rgba(0,0,0,0.12), inset 4px 4px 8px rgba(255,255,255,0.45)`,
+    }),
+    border: () => "none",
+    shadow: (c) => `14px 14px 28px ${rgba(c.text, 0.14)}, inset -8px -8px 16px ${rgba(c.text, 0.08)}, inset 8px 8px 16px rgba(255,255,255,0.75)`,
+  },
+  {
+    id: "neumorphic",
+    name: "Neumorphic",
+    blurb: "Surface matches the background; dual soft shadows for a raised look.",
+    radius: 20,
+    fixedRadius: true,
+    blur: 0,
+    texture: false,
+    card: (c) => ({
+      background: c.background,
+      border: "none",
+      boxShadow: `9px 9px 18px ${mix(c.background, "#000", 16)}, -9px -9px 18px ${mix(c.background, "#fff", 70)}`,
+    }),
+    control: (c) => ({
+      boxShadow: `5px 5px 10px ${mix(c.background, "#000", 18)}, -5px -5px 10px ${mix(c.background, "#fff", 70)}`,
+    }),
+    border: () => "none",
+    shadow: (c) => `9px 9px 18px ${mix(c.background, "#000", 16)}, -9px -9px 18px ${mix(c.background, "#fff", 70)}`,
+  },
+  {
+    id: "hard-edge",
+    name: "Hard edge",
+    blurb: "No radius, solid border, no shadow.",
+    radius: 0,
+    fixedRadius: true,
+    blur: 0,
+    texture: false,
+    card: (c) => ({ background: c.surface, border: `2px solid ${c.text}`, boxShadow: "none" }),
+    control: (c) => ({ border: `2px solid ${c.text}`, boxShadow: "none" }),
+    border: (c) => `2px solid ${c.text}`,
+    shadow: () => "none",
+  },
+  {
+    id: "outlined",
+    name: "Outlined only",
+    blurb: "Transparent fill, visible border, no shadow.",
+    radius: 8,
+    blur: 0,
+    texture: false,
+    card: (c) => ({ background: "transparent", border: `1.5px solid ${rgba(c.text, 0.28)}`, boxShadow: "none" }),
+    control: () => ({ boxShadow: "none" }),
+    border: (c) => `1.5px solid ${rgba(c.text, 0.28)}`,
+    shadow: () => "none",
+  },
+  {
+    id: "layered",
+    name: "Layered shadow",
+    blurb: "Multiple stacked shadows for a deliberate sense of depth.",
+    radius: 12,
+    blur: 0,
+    texture: false,
+    card: (c) => ({ background: c.surface, border: "none", boxShadow: layeredShadow(isDark(c.background) ? "#000000" : c.text, 0.07) }),
+    control: (c) => ({ boxShadow: layeredShadow(isDark(c.background) ? "#000000" : c.text, 0.08).split(", ").slice(0, 3).join(", ") }),
+    border: () => "none",
+    shadow: (c) => layeredShadow(isDark(c.background) ? "#000000" : c.text, 0.07),
+  },
+  {
+    id: "gradient-border",
+    name: "Gradient border",
+    blurb: "Flat fill with a gradient used as the border color.",
+    radius: 14,
+    blur: 0,
+    texture: false,
+    card: (c, gradient) => ({
+      background: `linear-gradient(${c.surface}, ${c.surface}) padding-box, ${gradientOf(c, gradient)} border-box`,
+      border: "2px solid transparent",
+      boxShadow: isDark(c.background) ? `0 0 24px ${rgba(c.primary, 0.25)}` : "none",
+    }),
+    control: (c) => ({ boxShadow: isDark(c.background) ? `0 0 16px ${rgba(c.primary, 0.45)}` : "none" }),
+    border: () => "2px solid transparent",
+    borderGradient: (c, gradient) => gradientOf(c, gradient),
+    shadow: (c) => (isDark(c.background) ? `0 0 24px ${rgba(c.primary, 0.25)}` : "none"),
+  },
+  {
+    id: "frosted",
+    name: "Frosted heavy blur",
+    blurb: "A stronger blur than standard glass, made for busy backgrounds.",
+    radius: 22,
+    blur: 30,
+    texture: false,
+    backdrop: true,
+    card: (c) => ({
+      background: `color-mix(in srgb, ${c.surface} 35%, transparent)`,
+      backdropFilter: "blur(30px) saturate(160%)",
+      WebkitBackdropFilter: "blur(30px) saturate(160%)",
+      border: "1px solid rgba(255,255,255,0.3)",
+      boxShadow: "0 10px 40px rgba(0, 0, 0, 0.18)",
+    }),
+    control: () => ({ boxShadow: "inset 0 1px 0 rgba(255,255,255,0.4), 0 6px 18px rgba(0,0,0,0.15)" }),
+    border: () => "1px solid rgba(255,255,255,0.3)",
+    shadow: () => "0 10px 40px rgba(0, 0, 0, 0.18)",
+  },
+  {
+    id: "grain",
+    name: "Textured / grain",
+    blurb: "Flat fill with a subtle noise or paper texture overlay.",
+    radius: 4,
+    blur: 0,
+    texture: true,
+    className: "dp-grain",
+    card: (c) => ({ background: mix(c.surface, c.text, 3), border: `1px solid ${rgba(c.text, 0.12)}`, boxShadow: "none" }),
+    control: () => ({ boxShadow: "none" }),
+    border: (c) => `1px solid ${rgba(c.text, 0.12)}`,
+    shadow: () => "none",
+  },
+  {
+    id: "skeuo",
+    name: "Skeuomorphic",
+    blurb: "Soft gradients and shadows that mimic a lit, physical surface.",
+    radius: 12,
+    blur: 0,
+    texture: false,
+    card: (c) => ({
+      background: `linear-gradient(180deg, ${mix(c.surface, "#fff", 35)} 0%, ${c.surface} 100%)`,
+      border: `1px solid ${mix(c.surface, "#000", 18)}`,
+      boxShadow: "inset 0 1px 0 rgba(255,255,255,0.6), 0 1px 2px rgba(0,0,0,0.2), 0 6px 14px rgba(0,0,0,0.14)",
+    }),
+    control: () => ({
+      backgroundImage: "linear-gradient(180deg, rgba(255,255,255,0.35), rgba(255,255,255,0) 55%)",
+      boxShadow: "inset 0 1px 0 rgba(255,255,255,0.5), 0 1px 2px rgba(0,0,0,0.25), 0 3px 8px rgba(0,0,0,0.15)",
+    }),
+    border: (c) => `1px solid ${mix(c.surface, "#000", 18)}`,
+    shadow: () => "inset 0 1px 0 rgba(255,255,255,0.6), 0 1px 2px rgba(0,0,0,0.2), 0 6px 14px rgba(0,0,0,0.14)",
+  },
+]
+
+export const surfaceById = Object.fromEntries(SURFACES.map((s) => [s.id, s]))
+
+/** none / sm / md / lg / xl / pill, derived from a base radius in px. */
+export function radiusScale(base) {
+  return {
+    none: 0,
+    sm: Math.round(base * 0.5),
+    md: base,
+    lg: Math.round(base * 1.5),
+    xl: base * 2,
+    pill: 9999,
+  }
+}

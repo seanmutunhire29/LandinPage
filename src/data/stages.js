@@ -1,0 +1,70 @@
+// Ordered stage registry. The order mirrors Categories.md (Stage 0 → Stage 6),
+// followed by the review step that compiles the build spec.
+export const STAGES = [
+  {
+    id: "direction",
+    path: "/onboarding/direction",
+    label: "Direction",
+    title: "Pick a direction",
+    blurb: "Choose the named visual system that every later stage filters against.",
+    tagline: "One named system sets the tone for everything else.",
+  },
+  {
+    id: "typography",
+    path: "/onboarding/typography",
+    label: "Typography",
+    title: "Choose a type pairing",
+    blurb: "Pick a heading and body font pairing, with its size scale and weights.",
+    tagline: "Heading + body fonts with a real size scale.",
+  },
+  {
+    id: "color",
+    path: "/onboarding/color",
+    label: "Color",
+    title: "Choose a color palette",
+    blurb: "Pick a full palette with semantic roles, from primary to error.",
+    tagline: "A full palette with semantic roles, not loose swatches.",
+  },
+  {
+    id: "surface",
+    path: "/onboarding/surface",
+    label: "Surface",
+    title: "Set the surface",
+    blurb: "Decide how cards, buttons and containers render: radius, shadow, border and texture.",
+    tagline: "Radius, shadow, border and texture in one material.",
+  },
+  {
+    id: "components",
+    path: "/onboarding/components",
+    label: "Components",
+    title: "Pick your components",
+    blurb: "Choose a rendered variant for each recurring building block of the page.",
+    tagline: "Live variants for buttons, cards, nav, inputs and more.",
+  },
+  {
+    id: "layout",
+    path: "/onboarding/layout",
+    label: "Layout",
+    title: "Compose the page",
+    blurb: "Choose which sections to include, a layout for each, and their order.",
+    tagline: "Pick sections, choose layouts, drag them into order.",
+  },
+  {
+    id: "motion",
+    path: "/onboarding/motion",
+    label: "Motion",
+    title: "Choose a motion style",
+    blurb: "Set the duration scale, easing curve, and which interactions animate.",
+    tagline: "Durations, easing, and what gets animated.",
+  },
+  {
+    id: "review",
+    path: "/onboarding/review",
+    label: "Review",
+    title: "Your build spec",
+    blurb: "Everything you chose, compiled into tokens, composition and content.",
+    tagline: "Export a build-ready JSON spec.",
+  },
+]
+
+export const stageIndex = (id) => STAGES.findIndex((s) => s.id === id)
