@@ -91,13 +91,14 @@ export function BuildProgress() {
   const current = steps.findLast((s) => s.state === "active")
   const done = steps.filter((s) => s.state === "done").length
   const progress = (done + (current ? 0.5 : 0)) / steps.length
+  const finished = done === steps.length
 
   return (
     <div className="flex w-full max-w-xs flex-col items-center gap-6">
       <Wireframe progress={progress} />
       <div className="w-full text-center" aria-live="polite">
-        <p className="font-display text-base font-semibold text-brand-navy">{current?.label ?? "Waiting for project files"}</p>
-        <p className="mt-0.5 truncate text-xs text-[#676879]">{current?.detail ?? "The agent will start writing shortly"}</p>
+        <p className="font-display text-base font-semibold text-brand-navy">{current?.label ?? (finished ? "Opening the preview" : "Waiting for project files")}</p>
+        <p className="mt-0.5 truncate text-xs text-[#676879]">{current?.detail ?? (finished ? "Almost there" : "The agent will start writing shortly")}</p>
         <div className="mt-3 h-1 overflow-hidden rounded-full bg-[#eceef6]">
           <div className="h-full rounded-full bg-brand transition-[width] duration-700 ease-out" style={{ width: `${Math.max(progress, 0.04) * 100}%` }} />
         </div>
