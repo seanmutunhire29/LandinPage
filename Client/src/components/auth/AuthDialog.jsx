@@ -19,8 +19,8 @@ function GoogleIcon() {
  * Signup/login modal. `redirectTo` is where OAuth and email-confirmation links
  * return to; `onAuthenticated` fires when email/password sign-in succeeds in place.
  */
-export function AuthDialog({ open, onOpenChange, onAuthenticated, redirectTo, title, description }) {
-  const [mode, setMode] = useState("signup")
+export function AuthDialog({ open, onOpenChange, onAuthenticated, redirectTo, title, description, initialMode = "signup" }) {
+  const [mode, setMode] = useState(initialMode)
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [busy, setBusy] = useState(null) // "email" | "google" | null

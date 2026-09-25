@@ -2,7 +2,7 @@ import { useEffect, useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { AlertTriangle, Loader2 } from "lucide-react"
 import { useAuthStore } from "@/store/useAuthStore"
-import { createPendingProject } from "@/lib/pendingProject"
+import { createPendingProject, peekPending } from "@/lib/pendingProject"
 
 /**
  * OAuth and email-confirmation links land here. supabase-js exchanges the code
@@ -35,8 +35,11 @@ export default function AuthCallback() {
           <AlertTriangle className="size-8 text-brand-red" />
           <p className="font-display text-lg font-semibold text-brand-navy">Something went wrong</p>
           <p className="text-sm text-[#676879]">{error}</p>
-          <Link to="/onboarding/review" className="mt-2 rounded-full bg-brand px-5 py-2 text-sm font-semibold text-white hover:bg-brand-dark">
-            Back to your project
+          <Link
+            to={peekPending() ? "/onboarding/review" : "/projects"}
+            className="mt-2 rounded-full bg-brand px-5 py-2 text-sm font-semibold text-white hover:bg-brand-dark"
+          >
+            {peekPending() ? "Back to your project" : "Try again"}
           </Link>
         </div>
       ) : (

@@ -45,7 +45,7 @@ function ToolChip({ call, live }) {
   )
 }
 
-export function MessageList({ messages, streaming = "", working = false, tools = {}, error, className }) {
+export function MessageList({ messages, streaming = "", working = false, tools = {}, error, onRetry, className }) {
   const end = useRef(null)
   const visible = messages.filter((m) => m.role === "user" || (m.role === "assistant" && (m.content || m.tool_calls?.length)))
 
@@ -54,14 +54,14 @@ export function MessageList({ messages, streaming = "", working = false, tools =
   }, [visible.length, streaming, working, tools])
 
   return (
-    <div className={cn("flex flex-col gap-4", className)}>
+    <div className={cn("flex min-w-0 flex-col gap-4 [overflow-wrap:anywhere]", className)}>
       {visible.map((m) =>
         m.role === "user" ? (
-          <div key={m.id} className="ml-8 self-end rounded-2xl rounded-br-md bg-brand px-4 py-2.5 text-[15px] whitespace-pre-wrap text-white">
+          <div key={m.id} className="ml-8 max-w-full self-end rounded-2xl rounded-br-md bg-brand px-4 py-2.5 text-[15px] whitespace-pre-wrap text-white">
             {m.content}
           </div>
         ) : (
-          <div key={m.id} className="mr-4 flex flex-col gap-2">
+          <div key={m.id} className="mr-4 flex min-w-0 flex-col gap-2">
             {m.content && <div className="text-[15px] leading-relaxed whitespace-pre-wrap text-brand-navy">{formatText(m.content)}</div>}
             {m.tool_calls?.length > 0 && (
               <ul className="flex flex-col gap-1.5">
@@ -80,8 +80,14 @@ export function MessageList({ messages, streaming = "", working = false, tools =
         </div>
       )}
       {error && (
-        <div className="flex items-start gap-2 rounded-xl bg-[#fff0f2] px-3 py-2.5 text-sm text-[#b3263e] ring-1 ring-[#ffd0d8]">
-          <AlertCircle className="mt-0.5 size-4 shrink-0" /> {error}
+        <div role="alert" className="flex min-w-0 items-start gap-2 rounded-xl bg-[#fff0f2] px-3 py-2.5 text-sm text-[#b3263e] ring-1 ring-[#ffd0d8]">
+          <AlertCircle className="mt-0.5 size-4 shrink-0" />
+          <p className="line-clamp-6 min-w-0 flex-1">{error}</p>
+          {onRetry && (
+            <button onClick={onRetry} className="shrink-0 font-semibold underline hover:no-underline">
+              Retry
+            </button>
+          )}
         </div>
       )}
       <div ref={end} />

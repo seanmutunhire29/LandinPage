@@ -94,6 +94,11 @@ export function useProjectSession(projectId) {
     socket.current?.send({ type: "chat", content })
   }, [])
 
+  const retry = useCallback(() => {
+    useWorkspaceStore.setState({ error: null })
+    socket.current?.send({ type: "resume" })
+  }, [])
+
   /** Editor edits: update store now, container and database after a short pause. */
   const editFile = useCallback((path, content) => {
     useWorkspaceStore.getState().setFile(path, content)
@@ -104,5 +109,5 @@ export function useProjectSession(projectId) {
     }, SAVE_DEBOUNCE_MS)
   }, [])
 
-  return { sendChat, editFile }
+  return { sendChat, retry, editFile }
 }

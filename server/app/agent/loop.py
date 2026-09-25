@@ -15,7 +15,7 @@ from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from pathlib import PurePosixPath
 
-from openai import AsyncOpenAI
+from openai import APIConnectionError, APIStatusError, AsyncOpenAI
 
 from app import config, db
 from app.agent.bridge import CommandBridge
@@ -293,6 +293,7 @@ async def llm_call(client: AsyncOpenAI, msg: list[dict], tools: list[dict], on_t
         model=config.AGENT_MODEL,
         messages=msg,
         tools=tools,
+        max_tokens=config.AGENT_MAX_TOKENS,
         stream=True,
     )
     content: list[str] = []
@@ -327,6 +328,24 @@ async def llm_call(client: AsyncOpenAI, msg: list[dict], tools: list[dict], on_t
     if "content" not in message and "tool_calls" not in message:
         message["content"] = ""
     return message
+
+
+def describe_error(e: Exception) -> str:
+    """Short, user-facing description of a failed turn. Full details go to the log."""
+    if isinstance(e, APIStatusError):
+        if e.status_code == 402:
+            return (
+                "The model provider declined the request: the OpenRouter key doesn't have enough credit "
+                "for it. Add credits or raise the key's limit, or lower AGENT_MAX_TOKENS in server/.env."
+            )
+        if e.status_code == 401:
+            return "The model provider rejected the API key. Check OPENROUTER_API_KEY in server/.env."
+        if e.status_code == 429:
+            return "The model provider is rate limiting requests. Wait a moment and send your message again."
+        return f"The model provider returned an error ({e.status_code}). Try sending your message again."
+    if isinstance(e, APIConnectionError):
+        return "Couldn't reach the model provider. Check the server's network connection and try again."
+    return f"Something went wrong on our side ({type(e).__name__}). Try sending your message again."
 
 
 # ---------------------------------------------------------------------------

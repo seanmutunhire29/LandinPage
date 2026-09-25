@@ -22,7 +22,7 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
 from app import db
 from app.agent.bridge import CommandBridge
-from app.agent.loop import AgentContext, ToolError, history_from_db, normalize_path, run_turn
+from app.agent.loop import AgentContext, ToolError, describe_error, history_from_db, normalize_path, run_turn
 from app.auth import AuthError, verify_token
 
 log = logging.getLogger(__name__)
@@ -86,7 +86,7 @@ async def project_socket(ws: WebSocket, project_id: str):
             await emit({"type": "turn_done"})
         except Exception as e:
             log.exception("[%s] turn failed", project_id[:8])
-            await emit({"type": "error", "message": f"The agent hit an error: {e}"})
+            await emit({"type": "error", "message": describe_error(e)})
             await emit({"type": "turn_done"})
         finally:
             _running.discard(project_id)

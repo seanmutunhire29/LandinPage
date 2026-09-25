@@ -83,7 +83,7 @@ export default function Projects() {
         )}
       </main>
 
-      <AuthDialog open={authOpen} onOpenChange={setAuthOpen} redirectTo={`${window.location.origin}/auth/callback`} onAuthenticated={() => setAuthOpen(false)} />
+      <AuthDialog open={authOpen} onOpenChange={setAuthOpen} initialMode="login" redirectTo={`${window.location.origin}/auth/callback`} onAuthenticated={() => setAuthOpen(false)} />
     </div>
   )
 }

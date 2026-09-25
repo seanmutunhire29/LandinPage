@@ -60,7 +60,7 @@ function CodePane({ onEdit }) {
 
 export default function Workspace() {
   const { projectId } = useParams()
-  const { sendChat, editFile } = useProjectSession(projectId)
+  const { sendChat, retry, editFile } = useProjectSession(projectId)
   const project = useWorkspaceStore((s) => s.project)
   const runtime = useWorkspaceStore((s) => s.runtime)
   const [view, setView] = useState("split")
@@ -113,7 +113,7 @@ export default function Workspace() {
 
       <Group orientation="horizontal" className="min-h-0 flex-1">
         <Panel defaultSize={380} minSize={300} maxSize={560}>
-          <ChatPanel onSend={sendChat} />
+          <ChatPanel onSend={sendChat} onRetry={retry} />
         </Panel>
         <HSep />
         {view !== "preview" && (

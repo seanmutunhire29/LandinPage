@@ -37,6 +37,8 @@ export default function App() {
         </Route>
         <Route path="/auth/callback" element={<AuthCallback />} />
         <Route path="/projects" element={<Projects />} />
+        {/* Direct sign-in link: the projects page shows sign-in when logged out. */}
+        <Route path="/login" element={<Navigate to="/projects" replace />} />
         <Route
           path="/projects/:projectId"
           element={
