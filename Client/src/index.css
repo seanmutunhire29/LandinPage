@@ -39,7 +39,7 @@
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
 
-  /* DesignPath brand (marketing page + wizard chrome) */
+  /* LandInPage brand (marketing page + wizard chrome) */
   --color-brand: #6161ff;
   --color-brand-dark: #4b4bd6;
   --color-brand-red: #ff3d57;

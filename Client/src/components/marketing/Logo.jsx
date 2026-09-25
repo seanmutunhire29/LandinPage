@@ -10,7 +10,7 @@ export function Logo({ className, light }) {
         <circle cx="22" cy="10" r="3.5" fill="#00CA72" />
       </svg>
       <span className={cn("font-display text-lg font-bold tracking-tight", light ? "text-white" : "text-brand-navy")}>
-        DesignPath
+        LandInPage
       </span>
     </span>
   )

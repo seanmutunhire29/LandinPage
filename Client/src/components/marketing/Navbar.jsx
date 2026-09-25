@@ -5,7 +5,7 @@ export function Navbar() {
   return (
     <header className="sticky top-0 z-40 bg-white/85 backdrop-blur">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 md:px-8">
-        <Link to="/" aria-label="DesignPath home">
+        <Link to="/" aria-label="LandInPage home">
           <Logo />
         </Link>
         <nav className="flex items-center gap-2 md:gap-6">

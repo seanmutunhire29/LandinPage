@@ -12,8 +12,6 @@ API_KEY = os.getenv("OPENROUTER_API_KEY")
 BASE_URL = os.getenv("OPENROUTER_BASE_URL", default="https://openrouter.ai/api/v1")
 
 
-
-
 def tool_call(response):
     tool_calls_arr = response.choices[0].message.tool_calls
     for tool in tool_calls_arr:

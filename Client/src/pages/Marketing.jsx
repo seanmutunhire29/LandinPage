@@ -1,5 +1,6 @@
 import { Navbar } from "@/components/marketing/Navbar"
 import { Hero } from "@/components/marketing/Hero"
+import { LogoMarquee } from "@/components/marketing/LogoMarquee"
 import { Problem } from "@/components/marketing/Problem"
 import { HowItWorks } from "@/components/marketing/HowItWorks"
 import { CtaBand } from "@/components/marketing/CtaBand"
@@ -10,6 +11,7 @@ export default function Marketing() {
     <div className="min-h-svh bg-white">
       <Navbar />
       <Hero />
+      <LogoMarquee />
       <Problem />
       <HowItWorks />
       <CtaBand />

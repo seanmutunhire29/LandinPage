@@ -49,7 +49,7 @@ export default function Review() {
 
   const download = () => {
     const url = URL.createObjectURL(new Blob([json], { type: "application/json" }))
-    const a = Object.assign(document.createElement("a"), { href: url, download: `designpath-spec-${spec.meta.direction.id}.json` })
+    const a = Object.assign(document.createElement("a"), { href: url, download: `landinpage-spec-${spec.meta.direction.id}.json` })
     a.click()
     URL.revokeObjectURL(url)
   }
@@ -114,7 +114,7 @@ export default function Review() {
                 <span className="size-3 rounded-full bg-[#FF5F57]" />
                 <span className="size-3 rounded-full bg-[#FEBC2E]" />
                 <span className="size-3 rounded-full bg-[#28C840]" />
-                <span className="ml-3 font-mono text-xs text-white/50">designpath-spec-{spec.meta.direction.id}.json</span>
+                <span className="ml-3 font-mono text-xs text-white/50">landinpage-spec-{spec.meta.direction.id}.json</span>
               </div>
               <span className="font-mono text-xs text-white/40">{json.split("\n").length} lines</span>
             </div>

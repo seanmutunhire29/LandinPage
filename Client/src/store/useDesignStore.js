@@ -85,6 +85,6 @@ export const useDesignStore = create(
 
       reset: () => set({ ...initialState, sections: initialSections() }),
     }),
-    { name: "designpath-selections", version: 1 }
+    { name: "landinpage-selections", version: 1 }
   )
 )

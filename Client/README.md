@@ -1,8 +1,8 @@
-# DesignPath
+# LandInPage
 
 A design decision platform for landing pages. Users step through seven stages
 (Direction → Typography → Color → Surface → Components → Layout → Motion). Each
-stage is filtered by earlier choices. At the end, DesignPath compiles every choice
+stage is filtered by earlier choices. At the end, LandInPage compiles every choice
 into a JSON build spec made of `tokens`, `composition` and `content`.
 
 `Categories.md` is the source of truth for stage content and filtering logic.
