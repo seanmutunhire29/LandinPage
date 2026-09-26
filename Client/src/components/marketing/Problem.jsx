@@ -24,25 +24,25 @@ const PAINS = [
 export function Problem() {
   return (
     <section id="problem" className="px-3 md:px-6">
-      <div className="mx-auto max-w-7xl rounded-[40px] bg-brand-navy px-6 py-20 md:px-14 md:py-28">
+      <div className="pop-in-view mx-auto max-w-7xl rounded-block bg-brand px-6 py-20 shadow-brand md:px-14 md:py-28">
         <div className="max-w-3xl">
-          <p className="text-sm font-semibold tracking-wide text-brand-yellow uppercase">The problem</p>
-          <h2 className="mt-4 font-display text-4xl leading-tight font-bold tracking-tight text-white md:text-6xl">
+          <p className="inline-block rounded-full px-3.5 py-1 text-sm font-bold tracking-wide text-brand-navy uppercase ring-2 ring-brand-navy/40">The problem</p>
+          <h2 className="mt-5 font-display text-4xl leading-tight font-semibold text-brand-navy md:text-heading">
             Every AI-built site looks the same.
           </h2>
-          <p className="mt-6 text-lg leading-relaxed text-white/70 md:text-xl">
+          <p className="mt-6 text-lg leading-relaxed text-brand-navy/80 md:text-[21px]">
             The tools aren't bad. Nobody made the design decisions, so the model filled in the gaps with the average.
             LandinPage gives you back those decisions.
           </p>
         </div>
         <div className="mt-14 grid gap-5 md:grid-cols-3">
           {PAINS.map(({ icon: Icon, color, title, body }) => (
-            <div key={title} className="rounded-3xl bg-white/[0.06] p-7 ring-1 ring-white/10">
-              <span className={`grid size-12 place-items-center rounded-2xl ${color} text-brand-navy`}>
+            <div key={title} className="rounded-[39px] bg-white p-8 shadow-clay transition-transform duration-200 ease-spring hover:scale-[1.03]">
+              <span className={`grid size-14 place-items-center rounded-[20px] ${color} text-brand-navy shadow-clay-sm`}>
                 <Icon className="size-6" />
               </span>
-              <h3 className="mt-5 font-display text-xl font-semibold text-white">{title}</h3>
-              <p className="mt-2 leading-relaxed text-white/65">{body}</p>
+              <h3 className="mt-6 font-display text-[21px] font-semibold text-brand-navy">{title}</h3>
+              <p className="mt-2 leading-relaxed text-brand-muted">{body}</p>
             </div>
           ))}
         </div>

@@ -23,7 +23,7 @@ export default function Motion() {
       <StagePage>
         <StageHeader eyebrow="Stage 6" title={stage.title} blurb={stage.blurb} />
         {timing !== 1 && (
-          <p className="-mt-4 mb-6 text-sm text-[#676879]">
+          <p className="-mt-4 mb-6 text-sm text-brand-muted">
             {theme.direction.name} runs every duration at {timing}× speed for a slower, more deliberate feel.
           </p>
         )}
@@ -37,7 +37,7 @@ export default function Motion() {
               title={m.name}
               subtitle={m.blurb}
               footer={
-                <p className="mt-1.5 font-mono text-[11px] text-[#9699a6]">
+                <p className="mt-1.5 font-mono text-[11px] text-brand-subtle">
                   {Math.round(m.durationScale.base * timing)}ms · {m.easing}
                 </p>
               }

@@ -2,7 +2,11 @@ import Editor from "@monaco-editor/react"
 import { X } from "lucide-react"
 import { useWorkspaceStore } from "@/store/useWorkspaceStore"
 import { cn } from "@/lib/utils"
-import { languageFor } from "./monacoSetup"
+import { languageFor, MONACO_THEME } from "./monacoSetup"
+import { FileIcon } from "./FileIcon"
+
+// Matches editor.background in the plum Monaco theme (monacoSetup.js).
+const MONACO_BG = "bg-[#2a0548]"
 
 export function CodeEditor({ onEdit }) {
   const openTabs = useWorkspaceStore((s) => s.openTabs)
@@ -12,27 +16,30 @@ export function CodeEditor({ onEdit }) {
   const closeTab = useWorkspaceStore((s) => s.closeTab)
 
   return (
-    <div className="flex h-full min-h-0 flex-col bg-[#1e1e1e]">
-      <div className="flex h-9 shrink-0 overflow-x-auto border-b border-white/10 bg-[#181818]" role="tablist">
+    <div className={cn("flex h-full min-h-0 flex-col", MONACO_BG)}>
+      <div className="flex h-10 shrink-0 gap-1 overflow-x-auto bg-brand-navy px-1.5 pt-1.5" role="tablist">
         {openTabs.map((path) => (
           <div
             key={path}
             role="tab"
             aria-selected={path === activeFile}
             className={cn(
-              "group flex shrink-0 cursor-pointer items-center gap-2 border-r border-white/10 pr-1.5 pl-3 font-mono text-xs",
-              path === activeFile ? "bg-[#1e1e1e] text-white" : "text-white/50 hover:text-white/80"
+              "group relative flex shrink-0 cursor-pointer items-center gap-2 rounded-t-lg pr-1.5 pl-3 text-sm transition-colors",
+              path === activeFile
+                ? cn(MONACO_BG, "font-medium text-white after:absolute after:inset-x-3 after:top-0 after:h-0.5 after:rounded-full after:bg-brand")
+                : "text-white/55 hover:bg-white/[0.06] hover:text-white/85"
             )}
             onClick={() => openFile(path)}
             title={path}
           >
+            <FileIcon path={path} />
             {path.split("/").pop()}
             <button
               onClick={(e) => {
                 e.stopPropagation()
                 closeTab(path)
               }}
-              className="grid size-5 place-items-center rounded opacity-0 group-hover:opacity-100 group-aria-selected:opacity-100 hover:bg-white/10"
+              className="grid size-5 place-items-center rounded-full opacity-0 group-hover:opacity-100 group-aria-selected:opacity-100 hover:bg-white/10"
               aria-label={`Close ${path}`}
             >
               <X className="size-3" />
@@ -46,7 +53,7 @@ export function CodeEditor({ onEdit }) {
             path={activeFile}
             language={languageFor(activeFile)}
             value={content}
-            theme="vs-dark"
+            theme={MONACO_THEME}
             onChange={(value) => onEdit(activeFile, value ?? "")}
             options={{
               fontSize: 13,

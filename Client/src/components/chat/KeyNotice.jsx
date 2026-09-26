@@ -3,6 +3,8 @@ import { Link } from "react-router-dom"
 import { ExternalLink, Loader2 } from "lucide-react"
 import { useAccountStore } from "@/store/useAccountStore"
 import { ProviderTile } from "@/components/account/UserAvatar"
+import { BrandButton } from "@/components/brand/button"
+import { BrandInput } from "@/components/brand/field"
 
 /**
  * Shown when the next turn needs the user's own key: after the free first
@@ -32,33 +34,34 @@ export function KeyNotice({ provider, message, onSaved }) {
   }
 
   return (
-    <div role="alert" className="mb-2 rounded-xl bg-gradient-to-br from-[#f1f1ff] to-[#faf8ff] p-3 ring-1 ring-brand/20">
+    <div role="alert" className="mb-2 rounded-2xl bg-secondary p-3 ring-1 ring-brand/20">
       <div className="flex items-start gap-2.5">
         <ProviderTile provider={provider.id} className="size-7 text-xs" />
-        <p className="min-w-0 flex-1 text-[13px] leading-snug text-brand-navy">{message}</p>
+        <p className="min-w-0 flex-1 text-sm leading-snug text-brand-navy">{message}</p>
       </div>
       <form onSubmit={submit} className="mt-2.5 flex gap-1.5">
-        <input
+        <BrandInput
+          size="sm"
           type="password"
           value={value}
           onChange={(e) => setValue(e.target.value)}
           placeholder={`${provider.label} key (${provider.key_hint})`}
           autoComplete="off"
           spellCheck={false}
-          className="h-8 min-w-0 flex-1 rounded-md border border-[#d7d9e6] bg-white px-2 font-mono text-[12px] text-brand-navy outline-none placeholder:font-sans placeholder:text-[#9699a6] focus:border-brand/50 focus:ring-2 focus:ring-brand/20"
+          className="flex-1 font-mono text-xs placeholder:font-sans"
           aria-label={`${provider.label} API key`}
         />
-        <button type="submit" disabled={!value.trim() || busy} className="inline-flex h-8 shrink-0 items-center gap-1 rounded-md bg-brand px-3 text-[12px] font-semibold text-white transition-colors hover:bg-brand-dark disabled:opacity-50">
-          {busy && <Loader2 className="size-3 animate-spin" />}
+        <BrandButton type="submit" size="sm" disabled={!value.trim() || busy}>
+          {busy && <Loader2 className="animate-spin" />}
           {onSaved ? "Save & retry" : "Save key"}
-        </button>
+        </BrandButton>
       </form>
-      {error && <p className="mt-1.5 text-[12px] text-[#b3263e]">{error}</p>}
-      <div className="mt-2 flex items-center gap-3 text-[11px] text-[#676879]">
-        <a href={provider.key_url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 hover:text-brand">
+      {error && <p className="mt-1.5 text-xs text-danger">{error}</p>}
+      <div className="mt-2 flex items-center gap-3 text-xs text-brand-muted">
+        <a href={provider.key_url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 hover:text-brand-dark">
           Get a {provider.label} key <ExternalLink className="size-3" />
         </a>
-        <Link to="/settings/models" className="hover:text-brand">
+        <Link to="/settings/models" className="hover:text-brand-dark">
           Use another provider
         </Link>
       </div>

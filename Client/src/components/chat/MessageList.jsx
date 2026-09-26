@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils"
 function formatText(text) {
   return text.split(/(`[^`\n]+`|\*\*[^*\n]+\*\*)/g).map((part, i) => {
     if (part.startsWith("`") && part.endsWith("`") && part.length > 2)
-      return <code key={i} className="rounded bg-[#eef0fb] px-1 py-0.5 font-mono text-[0.85em] text-brand-navy">{part.slice(1, -1)}</code>
+      return <code key={i} className="rounded-md bg-secondary px-1 py-0.5 font-mono text-[0.85em] text-brand-navy">{part.slice(1, -1)}</code>
     if (part.startsWith("**") && part.endsWith("**") && part.length > 4) return <strong key={i}>{part.slice(2, -2)}</strong>
     return <Fragment key={i}>{part}</Fragment>
   })
@@ -41,9 +41,9 @@ function describeTool(name, args) {
 }
 
 const STATUS = {
-  pending: { label: "Queued", Icon: CircleDashed, className: "text-[#9699a6]" },
+  pending: { label: "Queued", Icon: CircleDashed, className: "text-brand-subtle" },
   running: { label: "Running", Icon: Loader2, spin: true },
-  ok: { label: "Done", Icon: CheckCircle2, className: "text-[#00a35c]" },
+  ok: { label: "Done", Icon: CheckCircle2, className: "text-success" },
   error: { label: "Failed", Icon: XCircle, className: "text-brand-red" },
 }
 
@@ -53,7 +53,7 @@ function FilePath({ path }) {
   const i = path.lastIndexOf("/")
   return (
     <>
-      {i >= 0 && <span className="text-[#9699a6]">{path.slice(0, i + 1)}</span>}
+      {i >= 0 && <span className="text-brand-subtle">{path.slice(0, i + 1)}</span>}
       <span className="font-semibold">{path.slice(i + 1)}</span>
     </>
   )
@@ -70,24 +70,24 @@ function ToolCard({ call, live, status }) {
       data-status={status}
       title={live?.summary}
       className={cn(
-        "relative flex items-center gap-2.5 overflow-hidden rounded-lg p-1.5 pr-2.5 text-xs ring-1 transition-[opacity,box-shadow]",
-        bash ? "bg-brand-navy text-white ring-brand-navy" : "bg-white text-brand-navy ring-[#e3e5f0]",
+        "relative flex items-center gap-2.5 overflow-hidden rounded-xl p-1.5 pr-2.5 text-xs ring-1 transition-[opacity,box-shadow]",
+        bash ? "bg-brand-navy text-white ring-brand-navy" : "bg-white text-brand-navy ring-border",
         status === "pending" && "opacity-55",
-        status === "running" && cn("shadow-[0_2px_10px_-4px_rgb(24_27_52/0.25)]", s.ring),
+        status === "running" && cn("shadow-lift", s.ring),
         status === "error" && "ring-brand-red/50"
       )}
     >
-      <span className={cn("grid size-7 shrink-0 place-items-center rounded-md", s.tile)}>
+      <span className={cn("grid size-7 shrink-0 place-items-center rounded-lg", s.tile)}>
         <Icon className="size-3.5" />
       </span>
       <div className="min-w-0 flex-1 leading-tight">
-        <p className={cn("text-[10px] font-semibold tracking-wider uppercase", s.kind)}>{kind}</p>
-        <p className={cn("truncate", bash && "font-mono text-[11px] text-white/90")}>
+        <p className={cn("text-xs font-semibold tracking-wider uppercase", s.kind)}>{kind}</p>
+        <p className={cn("truncate", bash && "font-mono text-xs text-white/90")}>
           {bash && <span className="mr-1 text-brand-green">$</span>}
           {path !== undefined ? <FilePath path={path} /> : target}
         </p>
       </div>
-      <span className={cn("inline-flex shrink-0 items-center gap-1 text-[11px] font-medium", bash && status !== "error" ? "text-white/60" : (st.className ?? s.kind))}>
+      <span className={cn("inline-flex shrink-0 items-center gap-1 text-xs font-medium", bash && status !== "error" ? "text-white/60" : (st.className ?? s.kind))}>
         <st.Icon className={cn("size-3.5", st.spin && "animate-spin")} />
         <span>{st.label}</span>
       </span>
@@ -126,19 +126,19 @@ export function MessageList({ messages, streaming = "", working = false, tools =
         t.role === "user" ? (
           <div
             key={t.id}
-            className="ml-10 max-w-full self-end rounded-xl rounded-tr-sm bg-secondary px-3.5 py-2.5 text-[15px] leading-relaxed whitespace-pre-wrap text-brand-navy shadow-[0_1px_2px_rgb(24_27_52/0.06)] ring-1 ring-brand/10"
+            className="ml-10 max-w-full self-end rounded-2xl rounded-tr-md bg-secondary px-4 py-2.5 text-ui leading-relaxed whitespace-pre-wrap text-brand-navy ring-1 ring-brand/10"
           >
             {t.content}
           </div>
         ) : (
           <div key={t.id} className="grid min-w-0 grid-cols-[1.5rem_minmax(0,1fr)] gap-x-2.5">
             <LogoMark className="size-6" />
-            <p className="self-center font-display text-[13px] font-semibold text-brand-navy">LandinPage</p>
-            <span className="mx-auto mt-1.5 w-px bg-gradient-to-b from-[#e3e5f0] to-transparent" aria-hidden />
+            <p className="self-center font-display text-sm font-semibold text-brand-navy">LandinPage</p>
+            <span className="mx-auto mt-1.5 w-px bg-gradient-to-b from-border to-transparent" aria-hidden />
             <div className="flex min-w-0 flex-col gap-2.5 pt-1.5 pb-1">
               {t.items.map((m) => (
                 <Fragment key={m.id}>
-                  {m.content && <div className="text-[15px] leading-relaxed whitespace-pre-wrap text-brand-navy">{formatText(m.content)}</div>}
+                  {m.content && <div className="text-ui leading-relaxed whitespace-pre-wrap text-brand-navy">{formatText(m.content)}</div>}
                   {m.tool_calls?.length > 0 && (
                     <ul className="flex flex-col gap-1.5">
                       {m.tool_calls.map((call) => (
@@ -148,7 +148,7 @@ export function MessageList({ messages, streaming = "", working = false, tools =
                   )}
                 </Fragment>
               ))}
-              {t === lastTurn && streaming && <div className="text-[15px] leading-relaxed whitespace-pre-wrap text-brand-navy">{formatText(streaming)}</div>}
+              {t === lastTurn && streaming && <div className="text-ui leading-relaxed whitespace-pre-wrap text-brand-navy">{formatText(streaming)}</div>}
               {t === lastTurn && working && !streaming && (
                 <div className="flex items-center gap-1 py-1" role="status" aria-label="Working">
                   {[0, 150, 300].map((d) => (
@@ -161,7 +161,7 @@ export function MessageList({ messages, streaming = "", working = false, tools =
         )
       )}
       {error && (
-        <div role="alert" className="flex min-w-0 items-start gap-2 rounded-xl bg-[#fff0f2] px-3 py-2.5 text-sm text-[#b3263e] ring-1 ring-[#ffd0d8]">
+        <div role="alert" className="flex min-w-0 items-start gap-2 rounded-2xl bg-danger-soft px-3.5 py-2.5 text-sm text-danger ring-1 ring-danger/20">
           <AlertCircle className="mt-0.5 size-4 shrink-0" />
           <p className="line-clamp-6 min-w-0 flex-1">{error}</p>
           {onRetry && (

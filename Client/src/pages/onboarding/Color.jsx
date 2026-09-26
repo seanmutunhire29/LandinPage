@@ -58,7 +58,7 @@ export default function Color() {
               onSelect={() => setPalette(p.id)}
               title={p.name}
               subtitle={moodName[p.mood]}
-              footer={<p className="mt-1.5 text-[11px] text-[#9699a6]">Source: {p.source}</p>}
+              footer={<p className="mt-1.5 text-[11px] text-brand-subtle">Source: {p.source}</p>}
             >
               <PalettePreview theme={resolveTheme(state, { palette: p.id })} />
             </OptionCard>

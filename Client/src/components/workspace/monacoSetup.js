@@ -27,5 +27,21 @@ ts?.javascriptDefaults.setCompilerOptions({ jsx: ts.JsxEmit.Preserve, allowJs: t
 
 loader.config({ monaco })
 
+// vs-dark tinted plum to sit inside the brand's deep-purple workspace chrome.
+export const MONACO_THEME = "landinpage-plum"
+monaco.editor.defineTheme(MONACO_THEME, {
+  base: "vs-dark",
+  inherit: true,
+  rules: [],
+  colors: {
+    "editor.background": "#2a0548",
+    "editor.lineHighlightBackground": "#3b076480",
+    "editorLineNumber.foreground": "#8b76b0",
+    "editorLineNumber.activeForeground": "#e9d5ff",
+    "editor.selectionBackground": "#a78bfa55",
+    "editorCursor.foreground": "#86efac",
+  },
+})
+
 const LANGUAGES = { js: "javascript", jsx: "javascript", ts: "typescript", tsx: "typescript", json: "json", css: "css", html: "html", md: "markdown", svg: "xml" }
 export const languageFor = (path) => LANGUAGES[path.split(".").pop()] ?? "plaintext"

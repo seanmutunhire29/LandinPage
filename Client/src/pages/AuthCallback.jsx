@@ -24,7 +24,7 @@ export default function AuthCallback() {
       return () => clearTimeout(t)
     }
     createPendingProject()
-      .then((project) => navigate(project ? `/projects/${project.id}` : "/projects", { replace: true }))
+      .then((project) => navigate(project ? `/projects/${project.id}` : "/profile", { replace: true }))
       .catch((err) => setError(`Signed in, but the project couldn't be created: ${err.message}`))
   }, [ready, user, error, navigate])
 
@@ -34,17 +34,17 @@ export default function AuthCallback() {
         <div className="flex max-w-sm flex-col items-center gap-3 text-center">
           <AlertTriangle className="size-8 text-brand-red" />
           <p className="font-display text-lg font-semibold text-brand-navy">Something went wrong</p>
-          <p className="text-sm text-[#676879]">{error}</p>
+          <p className="text-sm text-brand-muted">{error}</p>
           <Link
-            to={peekPending() ? "/onboarding/review" : "/projects"}
-            className="mt-2 rounded-full bg-brand px-5 py-2 text-sm font-semibold text-white hover:bg-brand-dark"
+            to={peekPending() ? "/onboarding/review" : "/profile"}
+            className="mt-2 rounded-full bg-brand px-5 py-2 text-sm font-bold text-brand-navy shadow-brand-sm transition-transform duration-200 ease-spring hover:scale-[1.03] active:scale-95"
           >
             {peekPending() ? "Back to your project" : "Try again"}
           </Link>
         </div>
       ) : (
-        <div className="flex flex-col items-center gap-3 text-sm text-[#676879]">
-          <Loader2 className="size-6 animate-spin text-brand" />
+        <div className="flex flex-col items-center gap-3 text-sm text-brand-muted">
+          <Loader2 className="size-6 animate-spin text-brand-dark" />
           Signing you in...
         </div>
       )}

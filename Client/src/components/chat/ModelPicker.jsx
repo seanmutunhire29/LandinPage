@@ -30,15 +30,15 @@ export function ModelPicker() {
       }}
     >
       <PopoverTrigger
-        className="inline-flex h-7 max-w-44 min-w-0 items-center gap-1.5 rounded-md px-1.5 text-[12px] font-medium text-[#484a5e] transition-colors outline-none hover:bg-[#f1f2f8] focus-visible:ring-2 focus-visible:ring-brand/40 aria-expanded:bg-[#f1f2f8]"
+        className="inline-flex h-7 max-w-44 min-w-0 items-center gap-1.5 rounded-full px-2 text-xs font-medium text-brand-body transition-colors outline-none hover:bg-muted focus-visible:ring-4 focus-visible:ring-brand/30 aria-expanded:bg-muted"
         aria-label={`Model: ${current?.label} ${settings.model}`}
       >
         <ProviderTile provider={settings.provider} className="size-4.5 rounded text-[9px]" />
         <span className="truncate">{shortModel(settings.model)}</span>
-        <ChevronDown className="size-3 shrink-0 text-[#9699a6]" />
+        <ChevronDown className="size-3 shrink-0 text-brand-subtle" />
       </PopoverTrigger>
-      <PopoverContent side="top" align="start" className="h-[26rem] w-80 gap-2 p-1.5">
-        <div className="flex gap-1 border-b border-[#eef0f5] px-0.5 pb-2" role="tablist" aria-label="Provider">
+      <PopoverContent side="top" align="start" className="h-[26rem] w-80 gap-2 rounded-[26px] p-2 shadow-float ring-0">
+        <div className="flex gap-1 border-b border-border px-0.5 pb-2" role="tablist" aria-label="Provider">
           {providers.map((p) => (
             <button
               key={p.id}
@@ -47,11 +47,11 @@ export function ModelPicker() {
               title={p.label}
               onClick={() => setViewing(p.id)}
               className={cn(
-                "relative flex flex-1 flex-col items-center gap-1 rounded-md py-1.5 text-[10px] font-semibold transition-colors",
-                p.id === shown.id ? "bg-[#eef0fb] text-brand-navy" : "text-[#9699a6] hover:bg-[#f6f7fb]"
+                "relative flex flex-1 flex-col items-center gap-1 rounded-lg py-1.5 text-xs font-semibold transition-colors",
+                p.id === shown.id ? "bg-secondary text-brand-navy" : "text-brand-subtle hover:bg-brand-mist"
               )}
             >
-              <ProviderTile provider={p.id} className="size-6 rounded-md text-[11px]" />
+              <ProviderTile provider={p.id} className="size-6 rounded-md text-xs" />
               {p.label}
               {hasKey(settings, p.id) && <span className="absolute top-1 right-1.5 size-1.5 rounded-full bg-brand-green" aria-label="key connected" />}
             </button>
@@ -60,7 +60,7 @@ export function ModelPicker() {
         {!shownKey && (
           <Link
             to="/settings/models"
-            className="mx-0.5 flex items-center gap-2 rounded-md bg-[#fffaeb] px-2 py-1.5 text-[12px] text-[#8a6100] ring-1 ring-[#fde9b3] hover:bg-[#fff4d1]"
+            className="mx-0.5 flex items-center gap-2 rounded-lg bg-warning-soft px-2 py-1.5 text-xs text-warning ring-1 ring-warning-line hover:bg-warning-line/50"
           >
             <KeyRound className="size-3.5 shrink-0" /> No {shown.label} key yet. <span className="font-semibold underline">Add key</span>
           </Link>

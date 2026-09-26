@@ -12,7 +12,7 @@
 @theme inline {
   --font-sans: var(--app-font-body);
   --font-heading: var(--app-font-heading);
-  --font-display: "Poppins", var(--app-font-body);
+  --font-display: "Fredoka", var(--app-font-body);
   --color-ring: var(--ring);
   --color-input: var(--input);
   --color-border: var(--border);
@@ -39,46 +39,94 @@
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
 
-  /* LandinPage brand (marketing page + wizard chrome) */
-  --color-brand: #6161ff;
-  --color-brand-dark: #4b4bd6;
-  --color-brand-red: #ff3d57;
-  --color-brand-yellow: #ffcb00;
-  --color-brand-green: #00ca72;
-  --color-brand-blue: #579bfc;
-  --color-brand-navy: #181b34;
-  --color-brand-mist: #f6f7fb;
+  /* LandinPage brand: "Sorbet" palette, claymorphic / playful-3D direction.
+     Token names predate the reskin; values are the spec's color roles. */
+  --color-brand: #a78bfa; /* primary, violet-400: fills */
+  --color-brand-dark: #7c3aed; /* violet-600: brand-colored text and hover, AA on light */
+  --color-brand-red: #fb7185; /* error */
+  --color-brand-yellow: #fcd34d; /* warning */
+  --color-brand-green: #86efac; /* accent */
+  --color-brand-blue: #f9a8d4; /* secondary (pink-300) */
+  --color-brand-navy: #3b0764; /* text, and the dark chrome (tooltips, terminal) */
+  --color-brand-mist: #fdf4ff; /* page background */
+  --color-brand-fill: #f7e8fd; /* filled inputs and pressed wells */
+
+  /* Brand text tones, all tinted toward the plum text color. */
+  --color-brand-ink: #3b0764;
+  --color-brand-body: #4d3a68;
+  --color-brand-muted: #6b6280;
+  --color-brand-subtle: #968cab;
+
+  /* Status tints for badges and notices */
+  --color-success: #15803d;
+  --color-success-soft: #dcfce7;
+  --color-danger: #be123c;
+  --color-danger-soft: #ffe4e6;
+  --color-warning: #92400e;
+  --color-warning-soft: #fef3c7;
+  --color-warning-line: #fde68a;
+
+  /* Brand type scale (perfect fourth). Headings use font-display (Fredoka 600). */
+  --text-ui: 15px;
+  --text-ui--line-height: 1.5;
+  --text-display: 67px;
+  --text-display--line-height: 1.04;
+  --text-heading: 51px;
+  --text-heading--line-height: 1.08;
+
+  /* Brand spacing: page gutters, section rhythm and card padding */
+  --spacing-gutter: 1.25rem;
+  --spacing-gutter-md: 2rem;
+  --spacing-card: 1.5rem;
+  --spacing-card-lg: 2rem;
+  --spacing-stack: 3rem;
+
+  /* Clay elevation: soft outer drop plus inner shade and highlight, no borders.
+     float/lift/brand/field keep their old names so existing call sites puff up. */
+  --shadow-clay: 14px 14px 28px rgb(59 7 100 / 0.14), inset -8px -8px 16px rgb(59 7 100 / 0.08), inset 8px 8px 16px rgb(255 255 255 / 0.75);
+  --shadow-clay-sm: 6px 6px 14px rgb(59 7 100 / 0.12), inset -4px -4px 8px rgb(59 7 100 / 0.07), inset 4px 4px 8px rgb(255 255 255 / 0.75);
+  --shadow-clay-inset: inset 4px 4px 10px rgb(59 7 100 / 0.1), inset -4px -4px 10px rgb(255 255 255 / 0.85);
+  --shadow-float: 20px 20px 40px rgb(59 7 100 / 0.16), inset -10px -10px 20px rgb(59 7 100 / 0.08), inset 10px 10px 20px rgb(255 255 255 / 0.8);
+  --shadow-lift: var(--shadow-clay);
+  --shadow-brand: 10px 10px 22px rgb(124 58 237 / 0.3), inset -6px -6px 12px rgb(59 7 100 / 0.14), inset 6px 6px 12px rgb(255 255 255 / 0.45);
+  --shadow-brand-sm: 4px 4px 10px rgb(124 58 237 / 0.28), inset -3px -3px 6px rgb(59 7 100 / 0.12), inset 3px 3px 6px rgb(255 255 255 / 0.45);
+  --shadow-field: var(--shadow-clay-inset);
+  --radius-block: 52px;
+
+  /* Springy motion */
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --animate-pop-in: dp-pop-in 700ms var(--ease-spring) both;
 
   /* Workspace tool-call accents, drawn from the brand palette */
-  --color-tool-read: #579bfc;
-  --color-tool-write: #6161ff;
-  --color-tool-bash: #181b34;
-  --color-tool-web: #c79400;
-  --color-tool-mcp: #676879;
+  --color-tool-read: #f472b6;
+  --color-tool-write: #8b5cf6;
+  --color-tool-bash: #3b0764;
+  --color-tool-web: #d97706;
+  --color-tool-mcp: #6b6280;
 }
 
 :root {
-  --app-font-body: "Figtree", ui-sans-serif, system-ui, sans-serif;
-  --app-font-heading: "Poppins", "Figtree", ui-sans-serif, sans-serif;
-  --background: #ffffff;
-  --foreground: #181b34;
+  --app-font-body: "Nunito", ui-sans-serif, system-ui, sans-serif;
+  --app-font-heading: "Fredoka", "Nunito", ui-sans-serif, sans-serif;
+  --background: #fdf4ff;
+  --foreground: #3b0764;
   --card: #ffffff;
-  --card-foreground: #181b34;
+  --card-foreground: #3b0764;
   --popover: #ffffff;
-  --popover-foreground: #181b34;
-  --primary: #6161ff;
-  --primary-foreground: #ffffff;
-  --secondary: #eef0fb;
-  --secondary-foreground: #181b34;
-  --muted: #f1f2f8;
-  --muted-foreground: #676879;
-  --accent: #eef0fb;
-  --accent-foreground: #181b34;
-  --destructive: #e2445c;
-  --border: #e3e5f0;
-  --input: #d7d9e6;
-  --ring: #6161ff;
-  --radius: 0.75rem;
+  --popover-foreground: #3b0764;
+  --primary: #a78bfa;
+  --primary-foreground: #3b0764;
+  --secondary: #fce7f3;
+  --secondary-foreground: #3b0764;
+  --muted: #f7e8fd;
+  --muted-foreground: #6b6280;
+  --accent: #f3e8ff;
+  --accent-foreground: #3b0764;
+  --destructive: #e11d48;
+  --border: #f5d0fe;
+  --input: #f5d0fe;
+  --ring: #a78bfa;
+  --radius: 1rem;
 }
 
 @layer base {
@@ -95,6 +143,22 @@
   html {
     @apply font-sans;
   }
+}
+
+/* Homepage section labels ("How it works", "Stage 0 · Direction"). */
+@utility eyebrow {
+  font-size: var(--text-sm);
+  line-height: var(--text-sm--line-height);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+}
+@utility eyebrow-xs {
+  font-size: var(--text-xs);
+  line-height: var(--text-xs--line-height);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
 }
 
 /* Grain overlay used by the "Textured/grain" surface. */
@@ -117,6 +181,10 @@
 @keyframes dp-fade-up {
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
+}
+@keyframes dp-pop-in {
+  0% { opacity: 0; transform: translateY(16px) scale(0.94); animation-timing-function: var(--ease-spring); }
+  100% { opacity: 1; transform: none; }
 }
 @keyframes dp-pop {
   0% { opacity: 0; transform: scale(0.6); }
@@ -142,6 +210,15 @@
 @keyframes dp-sweep {
   from { transform: translateX(-100%); }
   to { transform: translateX(250%); }
+}
+
+/* Entrance pop as a section scrolls into view (skipped where scroll timelines are unsupported). */
+@utility pop-in-view {
+  @supports (animation-timeline: view()) {
+    animation: dp-pop-in linear both;
+    animation-timeline: view();
+    animation-range: entry 0% entry 45%;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

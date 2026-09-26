@@ -10,15 +10,15 @@ export function SettingsLayout({ children }) {
   return (
     <div className="min-h-svh bg-brand-mist">
       <AppHeader className="max-w-6xl" />
-      <div className="mx-auto grid max-w-6xl gap-6 px-5 py-8 md:grid-cols-[220px_minmax(0,1fr)] md:gap-10 md:px-8 md:py-10">
-        <aside className="md:sticky md:top-8 md:self-start">
+      <div className="mx-auto grid max-w-6xl gap-6 px-gutter py-10 md:grid-cols-[220px_minmax(0,1fr)] md:gap-10 md:px-gutter-md md:py-14">
+        <aside className="md:sticky md:top-24 md:self-start">
           <NavLink
-            to="/projects"
-            className="mb-5 inline-flex items-center gap-1.5 text-[13px] font-medium text-[#676879] transition-colors hover:text-brand-navy"
+            to="/profile"
+            className="mb-6 inline-flex items-center gap-1.5 text-sm font-semibold text-brand-muted transition-colors hover:text-brand-navy"
           >
-            <ArrowLeft className="size-3.5" /> Back to projects
+            <ArrowLeft className="size-3.5" /> Back to profile
           </NavLink>
-          <p className="mb-2 hidden px-3 text-[11px] font-semibold tracking-wider text-[#9699a6] uppercase md:block">Settings</p>
+          <p className="eyebrow-xs mb-2 hidden px-4 text-brand-subtle md:block">Settings</p>
           <nav aria-label="Settings" className="-mx-1 flex gap-1 overflow-x-auto px-1 md:flex-col md:overflow-visible">
             {SECTIONS.map(({ id, label, Icon }) => (
               <NavLink
@@ -26,16 +26,14 @@ export function SettingsLayout({ children }) {
                 to={`/settings/${id}`}
                 className={({ isActive }) =>
                   cn(
-                    "relative flex shrink-0 items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium whitespace-nowrap transition-colors",
-                    isActive
-                      ? "bg-white text-brand-navy shadow-[0_1px_2px_rgb(24_27_52/0.06)] ring-1 ring-[#e3e5f0] md:before:absolute md:before:inset-y-2 md:before:left-0 md:before:w-0.5 md:before:rounded-full md:before:bg-brand"
-                      : "text-[#676879] hover:bg-white/70 hover:text-brand-navy"
+                    "flex h-10 shrink-0 items-center gap-2.5 rounded-full px-4 text-ui font-semibold whitespace-nowrap transition-colors outline-none focus-visible:ring-4 focus-visible:ring-brand/30",
+                    isActive ? "bg-brand text-brand-navy shadow-brand-sm" : "text-brand-muted hover:bg-white hover:text-brand-navy"
                   )
                 }
               >
                 {({ isActive }) => (
                   <>
-                    <Icon className={cn("size-4", isActive ? "text-brand" : "text-[#9699a6]")} />
+                    <Icon className={cn("size-4", isActive ? "text-brand-navy" : "text-brand-subtle")} />
                     {label}
                   </>
                 )}

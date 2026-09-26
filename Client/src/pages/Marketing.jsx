@@ -8,7 +8,7 @@ import { Footer } from "@/components/marketing/Footer"
 
 export default function Marketing() {
   return (
-    <div className="min-h-svh bg-white">
+    <div className="min-h-svh bg-brand-mist">
       <Navbar />
       <Hero />
       <LogoMarquee />

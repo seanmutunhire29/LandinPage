@@ -2,15 +2,17 @@ import "@/components/workspace/monacoSetup"
 import { useState } from "react"
 import { Link, useParams } from "react-router-dom"
 import { Group, Panel, Separator } from "react-resizable-panels"
-import { ChevronRight, Code2, Columns2, Eye, LayoutGrid, Loader2 } from "lucide-react"
+import { ChevronRight, Code2, Columns2, Download, Eye, LayoutGrid, Loader2 } from "lucide-react"
 import { useWorkspaceStore } from "@/store/useWorkspaceStore"
 import { useProjectSession } from "@/components/workspace/useProjectSession"
 import { ChatPanel } from "@/components/chat/ChatPanel"
 import { FileTree } from "@/components/workspace/FileTree"
 import { CodeEditor } from "@/components/workspace/CodeEditor"
 import { Preview } from "@/components/workspace/Preview"
-import { ViewSwitch } from "@/components/workspace/ViewSwitch"
+import { Segmented } from "@/components/brand/segmented"
+import { BrandButton } from "@/components/brand/button"
 import { Terminal } from "@/components/workspace/Terminal"
+import { ExportDialog } from "@/components/workspace/ExportDialog"
 import { UserMenu } from "@/components/auth/UserMenu"
 import { Logo } from "@/components/marketing/Logo"
 import { cn } from "@/lib/utils"
@@ -30,7 +32,7 @@ const RUNTIME_LABEL = {
 }
 
 function HSep() {
-  return <Separator className="w-px bg-[#e3e5f0] transition-colors hover:bg-brand data-[separator=active]:bg-brand" />
+  return <Separator className="w-px bg-border transition-colors hover:bg-brand data-[separator=active]:bg-brand" />
 }
 
 function VSep() {
@@ -45,7 +47,7 @@ function CodePane({ onEdit }) {
           <Panel defaultSize={200} minSize={140} maxSize={360}>
             <FileTree />
           </Panel>
-          <Separator className="w-px bg-white/10 hover:bg-brand" />
+          <Separator className="w-px bg-white/10 transition-colors hover:bg-brand data-[separator=active]:bg-brand" />
           <Panel minSize={200}>
             <CodeEditor onEdit={onEdit} />
           </Panel>
@@ -64,34 +66,36 @@ export default function Workspace() {
   const { sendChat, retry, editFile } = useProjectSession(projectId)
   const project = useWorkspaceStore((s) => s.project)
   const runtime = useWorkspaceStore((s) => s.runtime)
+  const files = useWorkspaceStore((s) => s.files)
   const [view, setView] = useState("split")
+  const [exportOpen, setExportOpen] = useState(false)
 
   return (
     <div className="flex h-svh flex-col bg-brand-mist">
-      <header className="relative z-10 grid h-14 shrink-0 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-4 border-b border-[#e3e5f0] bg-white px-4 shadow-[0_2px_8px_-6px_rgb(24_27_52/0.12)]">
+      <header className="relative z-10 grid h-14 shrink-0 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-4 bg-white px-gutter shadow-[0_12px_30px_-20px_rgb(59_7_100/0.4)]">
         <div className="flex min-w-0 items-center gap-3">
-          <Link to="/" aria-label="LandinPage home" className="shrink-0 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-brand/40">
+          <Link to="/" aria-label="LandinPage home" className="shrink-0 rounded-lg outline-none focus-visible:ring-4 focus-visible:ring-brand/30">
             <Logo size="sm" />
           </Link>
-          <span className="h-6 w-px shrink-0 bg-[#e3e5f0]" aria-hidden />
-          <nav aria-label="Breadcrumb" className="flex min-w-0 items-center gap-1.5 text-[13px]">
+          <span className="h-6 w-px shrink-0 bg-border" aria-hidden />
+          <nav aria-label="Breadcrumb" className="flex min-w-0 items-center gap-1.5 text-sm">
             <Link
-              to="/projects"
-              className="inline-flex shrink-0 items-center gap-1.5 rounded-md px-1.5 py-1 font-medium text-[#676879] transition-colors hover:bg-[#f1f2f8] hover:text-brand-navy"
+              to="/profile"
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-full px-2 py-1 font-medium text-brand-muted transition-colors hover:bg-muted hover:text-brand-navy"
             >
               <LayoutGrid className="size-3.5" />
               <span className="hidden lg:inline">Projects</span>
             </Link>
-            <ChevronRight className="size-3.5 shrink-0 text-[#c3c6d4]" aria-hidden />
-            <h1 className="min-w-0 truncate font-display font-semibold text-brand-navy">{project?.name ?? "Loading..."}</h1>
+            <ChevronRight className="size-3.5 shrink-0 text-brand-subtle/60" aria-hidden />
+            <h1 className="min-w-0 truncate font-display text-ui font-semibold text-brand-navy">{project?.name ?? "Loading..."}</h1>
           </nav>
           {runtime.status !== "idle" && (
             <span
               className={cn(
-                "inline-flex h-6 shrink-0 items-center gap-1.5 rounded-full px-2.5 text-[11px] font-semibold ring-1 ring-inset",
-                runtime.status === "ready" && "bg-[#e6faf1] text-[#00854b] ring-brand-green/25",
-                runtime.status === "error" && "bg-[#fff0f2] text-[#b3263e] ring-brand-red/25",
-                !["ready", "error"].includes(runtime.status) && "bg-[#eef0fb] text-brand ring-brand/20"
+                "inline-flex h-6 shrink-0 items-center gap-1.5 rounded-full px-2.5 text-xs font-semibold ring-1 ring-inset",
+                runtime.status === "ready" && "bg-success-soft text-success ring-brand-green/25",
+                runtime.status === "error" && "bg-danger-soft text-danger ring-brand-red/25",
+                !["ready", "error"].includes(runtime.status) && "bg-secondary text-brand-dark ring-brand/20"
               )}
             >
               {!["ready", "error"].includes(runtime.status) && <Loader2 className="size-3 animate-spin" />}
@@ -101,8 +105,18 @@ export default function Workspace() {
             </span>
           )}
         </div>
-        <ViewSwitch options={VIEWS} value={view} onChange={setView} label="Layout" />
+        <Segmented options={VIEWS} value={view} onChange={setView} label="Layout" />
         <div className="flex items-center justify-end gap-3">
+          <BrandButton
+            variant="outline"
+            size="sm"
+            onClick={() => setExportOpen(true)}
+            disabled={!project || !Object.keys(files).length}
+            title="Download files as a zip"
+          >
+            <Download />
+            <span className="hidden md:inline">Download</span>
+          </BrandButton>
           <UserMenu />
         </div>
       </header>
@@ -124,6 +138,8 @@ export default function Workspace() {
           </Panel>
         )}
       </Group>
+
+      <ExportDialog open={exportOpen} onOpenChange={setExportOpen} />
     </div>
   )
 }

@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { Logo } from "./Logo"
+import { brandButtonVariants } from "@/components/brand/button"
 import { useAuthStore } from "@/store/useAuthStore"
 import { AuthDialog } from "@/components/auth/AuthDialog"
 import { UserMenu } from "@/components/auth/UserMenu"
@@ -12,33 +13,32 @@ export function Navbar() {
   const [authOpen, setAuthOpen] = useState(false)
 
   return (
-    <header className="sticky top-0 z-40 bg-white/85 backdrop-blur">
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 md:px-8">
-        <Link to="/" aria-label="LandinPage home">
+    <header className="sticky top-0 z-40 px-3 pt-3 md:px-6">
+      <div className="mx-auto grid max-w-7xl grid-cols-[1fr_auto] items-center gap-4 rounded-full bg-white/90 py-2.5 pr-2.5 pl-6 shadow-clay-sm backdrop-blur md:grid-cols-[1fr_auto_1fr]">
+        <Link to="/" aria-label="LandinPage home" className="justify-self-start">
           <Logo />
         </Link>
-        <nav className="flex items-center gap-2 md:gap-6">
-          <a href="#problem" className="hidden text-[15px] font-medium text-[#323338] hover:text-brand md:block">
+        <div className="hidden items-center gap-1 rounded-full bg-brand-fill p-1 shadow-clay-inset md:flex">
+          <a href="#problem" className="rounded-full px-4 py-1.5 text-ui font-bold text-brand-ink transition-colors hover:bg-white hover:text-brand-dark">
             Why
           </a>
-          <a href="#how" className="hidden text-[15px] font-medium text-[#323338] hover:text-brand md:block">
+          <a href="#how" className="rounded-full px-4 py-1.5 text-ui font-bold text-brand-ink transition-colors hover:bg-white hover:text-brand-dark">
             How it works
           </a>
+        </div>
+        <nav className="flex items-center gap-2 justify-self-end md:gap-4">
           {user ? (
-            <Link to="/projects" className="px-2 text-[15px] font-medium text-[#323338] hover:text-brand">
+            <Link to="/profile" className="px-2 text-ui font-bold text-brand-ink hover:text-brand-dark">
               My projects
             </Link>
           ) : (
             ready && (
-              <button onClick={() => setAuthOpen(true)} className="px-2 text-[15px] font-medium text-[#323338] hover:text-brand">
+              <button onClick={() => setAuthOpen(true)} className="px-2 text-ui font-bold text-brand-ink hover:text-brand-dark">
                 Log in
               </button>
             )
           )}
-          <Link
-            to="/onboarding/direction"
-            className="inline-flex h-10 items-center rounded-full bg-brand px-5 text-[15px] font-semibold text-white hover:bg-brand-dark"
-          >
+          <Link to="/onboarding/direction" className={brandButtonVariants({ size: "md" })}>
             Get Started
           </Link>
           {user && <UserMenu />}
@@ -52,7 +52,7 @@ export function Navbar() {
         description="Log in to open your projects, or create an account to get started."
         onAuthenticated={() => {
           setAuthOpen(false)
-          navigate("/projects")
+          navigate("/profile")
         }}
       />
     </header>

@@ -17,16 +17,16 @@ export function SubStepper({ steps, currentIndex, onJump, isDone, canJump = () =
             disabled={!enabled}
             onClick={() => onJump(i)}
             className={cn(
-              "inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-sm font-medium transition-colors",
+              "inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-bold transition-[transform,background-color,box-shadow] duration-200 ease-spring enabled:hover:scale-[1.04] enabled:active:scale-95",
               current
-                ? "border-brand-navy bg-brand-navy text-white"
+                ? "bg-brand text-brand-navy shadow-brand-sm"
                 : done
-                  ? "border-brand/30 bg-brand/10 text-brand-navy hover:bg-brand/15"
-                  : "border-[#e3e5f0] bg-white text-[#676879] hover:border-[#c5c7d4]",
+                  ? "bg-white text-brand-navy shadow-clay-sm"
+                  : "bg-brand-fill text-brand-muted shadow-clay-inset",
               !enabled && "cursor-not-allowed opacity-50"
             )}
           >
-            {done && !current ? <Check className="size-3.5 text-brand" strokeWidth={3} /> : <span className="text-xs opacity-60">{i + 1}</span>}
+            {done && !current ? <Check className="size-3.5 text-brand-dark" strokeWidth={3} /> : <span className="text-xs opacity-60">{i + 1}</span>}
             {step.name}
           </button>
         )

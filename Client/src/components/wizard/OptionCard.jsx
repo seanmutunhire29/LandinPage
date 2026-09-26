@@ -24,10 +24,10 @@ export function OptionCard({ selected, recommended, onSelect, title, subtitle, c
       onClick={select}
       onKeyDown={handleKey}
       className={cn(
-        "group relative flex flex-col overflow-hidden rounded-2xl border-2 bg-white text-left transition-all outline-none",
-        "hover:-translate-y-0.5 hover:shadow-[0_12px_32px_-12px_rgba(24,27,52,0.25)] focus-visible:ring-4 focus-visible:ring-brand/30",
+        "group relative flex flex-col overflow-hidden rounded-[26px] bg-white text-left transition-[transform,box-shadow] duration-200 ease-spring outline-none",
+        "hover:scale-[1.02] hover:shadow-clay active:scale-[0.98] focus-visible:ring-4 focus-visible:ring-brand/40",
         disabled ? "cursor-default" : "cursor-pointer",
-        selected ? "border-brand shadow-[0_12px_32px_-12px_rgba(97,97,255,0.5)]" : "border-transparent ring-1 ring-[#e3e5f0]",
+        selected ? "shadow-clay ring-[3px] ring-brand" : "shadow-clay-sm",
         className
       )}
     >
@@ -37,21 +37,21 @@ export function OptionCard({ selected, recommended, onSelect, title, subtitle, c
           <div className="flex flex-wrap items-center gap-2">
             <h3 className="font-display text-[15px] leading-tight font-semibold text-brand-navy">{title}</h3>
             {recommended && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-brand-yellow/25 px-2 py-0.5 text-[11px] font-semibold text-[#8a6d00]">
+              <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold text-warning ring-[1.5px] ring-brand-yellow">
                 <Sparkles className="size-3" /> Recommended
               </span>
             )}
             {badges}
           </div>
-          {subtitle && <p className="mt-1 text-[13px] leading-snug text-[#676879]">{subtitle}</p>}
+          {subtitle && <p className="mt-1 text-[13px] leading-snug text-brand-muted">{subtitle}</p>}
           {footer}
         </div>
         <span
           aria-hidden
           className={cn(
-            "mt-0.5 grid size-6 shrink-0 place-items-center rounded-full border-2 transition-colors",
-            role === "checkbox" && "rounded-md",
-            selected ? "border-brand bg-brand text-white" : "border-[#d7d9e6] text-transparent group-hover:border-brand/50"
+            "mt-0.5 grid size-6 shrink-0 place-items-center rounded-full transition-[transform,background-color] duration-200 ease-spring",
+            role === "checkbox" && "rounded-lg",
+            selected ? "scale-110 bg-brand text-brand-navy shadow-brand-sm" : "bg-brand-fill text-transparent shadow-clay-inset"
           )}
         >
           <Check className="size-3.5" strokeWidth={3} />

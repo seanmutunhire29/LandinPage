@@ -45,8 +45,8 @@ export function ChatPanel({ onSend, onRetry }) {
       <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto px-4 py-5">
         <MessageList messages={messages} streaming={streaming} working={turnRunning} tools={tools} error={showKeyNotice ? null : error} onRetry={canRetry ? onRetry : undefined} />
       </div>
-      <div className="shrink-0 border-t border-[#e3e5f0] p-3">
-        {connection === "closed" && <p className="mb-2 text-xs text-[#9699a6]">Reconnecting...</p>}
+      <div className="shrink-0 border-t border-border p-3">
+        {connection === "closed" && <p className="mb-2 text-xs text-brand-subtle">Reconnecting...</p>}
         {showKeyNotice && <KeyNotice key={provider.id} provider={provider} message={keyMessage} onSaved={canRetry ? onRetry : undefined} />}
         <ChatInput
           onSubmit={onSend}

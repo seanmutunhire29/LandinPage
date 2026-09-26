@@ -2,7 +2,8 @@ import { useState } from "react"
 import { ChevronsUpDown, ExternalLink, Eye, EyeOff, Info, KeyRound, Loader2, Sparkles } from "lucide-react"
 import { hasKey, providerById, useAccountStore } from "@/store/useAccountStore"
 import { ProviderTile } from "@/components/account/UserAvatar"
-import { Button } from "@/components/ui/button"
+import { BrandButton } from "@/components/brand/button"
+import { BrandInput, fieldVariants } from "@/components/brand/field"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { ModelOptions } from "./ModelOptions"
 import { SettingsCard, SettingsHeader, SettingsRow } from "./SettingsCard"
@@ -21,13 +22,13 @@ function ProviderChoice({ providers, settings, onChoose }) {
             onClick={() => onChoose(p)}
             aria-pressed={active}
             className={cn(
-              "flex flex-col items-start gap-2 rounded-xl p-3 text-left ring-1 transition-all",
-              active ? "bg-[#f5f5ff] ring-2 ring-brand" : "bg-white ring-[#e3e5f0] hover:ring-brand/40"
+              "flex flex-col items-start gap-2 rounded-2xl p-3.5 text-left ring-1 transition-all outline-none focus-visible:ring-4 focus-visible:ring-brand/30",
+              active ? "bg-secondary ring-2 ring-brand" : "bg-white ring-border hover:scale-[1.02] hover:shadow-lift hover:ring-brand/40"
             )}
           >
             <ProviderTile provider={p.id} />
-            <span className="text-sm font-semibold text-brand-navy">{p.label}</span>
-            <span className={cn("text-[11px] font-medium", hasKey(settings, p.id) ? "text-[#00854b]" : "text-[#9699a6]")}>
+            <span className="font-display text-ui font-semibold text-brand-navy">{p.label}</span>
+            <span className={cn("text-xs font-semibold", hasKey(settings, p.id) ? "text-success" : "text-brand-subtle")}>
               {hasKey(settings, p.id) ? "Key connected" : "No key yet"}
             </span>
           </button>
@@ -42,11 +43,11 @@ function ModelCombobox({ provider, settings, onSelect }) {
   const key = settings.keys.find((k) => k.provider === provider.id)
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger className="flex h-9 w-full items-center gap-2 rounded-lg border border-[#d7d9e6] bg-white px-2.5 text-left text-sm text-brand-navy shadow-[0_1px_1px_rgb(24_27_52/0.03)] outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50">
+      <PopoverTrigger className={cn(fieldVariants(), "flex items-center gap-2 text-left aria-expanded:border-brand")}>
         <span className="min-w-0 flex-1 truncate font-medium">{settings.model}</span>
-        <ChevronsUpDown className="size-3.5 text-[#9699a6]" />
+        <ChevronsUpDown className="size-4 text-brand-subtle" />
       </PopoverTrigger>
-      <PopoverContent align="end" className="h-80 w-(--radix-popover-trigger-width) min-w-72 p-1.5">
+      <PopoverContent align="end" className="h-80 w-(--radix-popover-trigger-width) min-w-72 rounded-[26px] p-2 shadow-float ring-0">
         <ModelOptions
           provider={provider}
           value={settings.model}
@@ -86,32 +87,32 @@ function KeyRow({ provider, saved }) {
   }
 
   return (
-    <div className="py-4">
+    <div className="py-5">
       <div className="flex flex-wrap items-center gap-3">
         <ProviderTile provider={provider.id} />
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold text-brand-navy">{provider.label}</p>
-          <a href={provider.key_url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs text-[#9699a6] hover:text-brand">
+          <p className="font-display text-ui font-semibold text-brand-navy">{provider.label}</p>
+          <a href={provider.key_url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-sm text-brand-subtle hover:text-brand-dark">
             Get a key <ExternalLink className="size-3" />
           </a>
         </div>
         {saved ? (
-          <span className="inline-flex h-6 items-center gap-1.5 rounded-full bg-[#e6faf1] px-2.5 font-mono text-[11px] font-semibold text-[#00854b] ring-1 ring-brand-green/25 ring-inset">
+          <span className="inline-flex h-6 items-center gap-1.5 rounded-full bg-success-soft px-2.5 font-mono text-xs font-semibold text-success ring-1 ring-brand-green/25 ring-inset">
             <span className="size-1.5 rounded-full bg-brand-green" />
             {saved.last4 ? `•••• ${saved.last4}` : "Connected"}
           </span>
         ) : (
-          <span className="inline-flex h-6 items-center rounded-full bg-[#f1f2f8] px-2.5 text-[11px] font-semibold text-[#9699a6]">Not connected</span>
+          <span className="inline-flex h-6 items-center rounded-full bg-muted px-2.5 text-xs font-semibold text-brand-subtle">Not connected</span>
         )}
         {!editing && (
           <div className="flex gap-1.5">
-            <Button type="button" variant="outline" size="sm" onClick={() => setEditing(true)}>
+            <BrandButton type="button" variant="outline" size="sm" onClick={() => setEditing(true)}>
               {saved ? "Replace" : "Add key"}
-            </Button>
+            </BrandButton>
             {saved && (
-              <Button type="button" variant="ghost" size="sm" disabled={busy === "delete"} onClick={() => run("delete", () => deleteKey(provider.id))} className="text-[#b3263e] hover:bg-[#fff0f2] hover:text-[#b3263e]">
+              <BrandButton type="button" variant="danger" size="sm" disabled={busy === "delete"} onClick={() => run("delete", () => deleteKey(provider.id))}>
                 {busy === "delete" ? <Loader2 className="animate-spin" /> : "Remove"}
-              </Button>
+              </BrandButton>
             )}
           </div>
         )}
@@ -122,10 +123,10 @@ function KeyRow({ provider, saved }) {
             e.preventDefault()
             if (value.trim()) run("save", () => saveKey(provider.id, value.trim()))
           }}
-          className="mt-3 flex flex-wrap items-center gap-2 sm:pl-11"
+          className="mt-4 flex flex-wrap items-center gap-2 sm:pl-11"
         >
           <div className="relative min-w-0 flex-1">
-            <input
+            <BrandInput
               type={show ? "text" : "password"}
               value={value}
               onChange={(e) => setValue(e.target.value)}
@@ -133,32 +134,32 @@ function KeyRow({ provider, saved }) {
               autoFocus
               autoComplete="off"
               spellCheck={false}
-              className="h-9 w-full rounded-lg border border-[#d7d9e6] bg-white pr-9 pl-2.5 font-mono text-[13px] text-brand-navy outline-none placeholder:font-sans placeholder:text-[#9699a6] focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+              className="pr-10 font-mono text-sm placeholder:font-sans"
               aria-label={`${provider.label} API key`}
             />
-            <button type="button" onClick={() => setShow((v) => !v)} className="absolute top-1/2 right-2 -translate-y-1/2 text-[#9699a6] hover:text-brand-navy" aria-label={show ? "Hide key" : "Show key"}>
+            <button type="button" onClick={() => setShow((v) => !v)} className="absolute top-1/2 right-3 -translate-y-1/2 text-brand-subtle hover:text-brand-navy" aria-label={show ? "Hide key" : "Show key"}>
               {show ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
             </button>
           </div>
-          <Button type="submit" disabled={!value.trim() || busy === "save"} className="h-9 bg-brand px-4 text-white hover:bg-brand-dark">
+          <BrandButton type="submit" disabled={!value.trim() || busy === "save"}>
             {busy === "save" ? (
               <>
-                <Loader2 className="animate-spin" data-icon="inline-start" /> Checking
+                <Loader2 className="animate-spin" /> Checking
               </>
             ) : (
               "Save key"
             )}
-          </Button>
-          <Button type="button" variant="ghost" className="h-9" onClick={() => {
+          </BrandButton>
+          <BrandButton type="button" variant="ghost" onClick={() => {
               setEditing(false)
               setValue("")
               setError(null)
             }}>
             Cancel
-          </Button>
+          </BrandButton>
         </form>
       )}
-      {error && <p className="mt-2 text-xs text-[#b3263e] sm:pl-11">{error}</p>}
+      {error && <p className="mt-2 text-xs text-danger sm:pl-11">{error}</p>}
     </div>
   )
 }
@@ -182,15 +183,15 @@ export function ModelsSection() {
     <>
       <SettingsHeader title="Models & API keys" description="Choose which AI builds and edits your sites, and connect your own provider keys." />
       <div className="flex flex-col gap-6">
-        <div className="flex items-start gap-3 rounded-2xl bg-gradient-to-br from-[#f1f1ff] to-[#f8f5ff] p-5 ring-1 ring-brand/15">
-          <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-brand text-white">
-            <Sparkles className="size-4.5" />
+        <div className="flex items-start gap-4 rounded-3xl bg-secondary p-card ring-1 ring-brand/15">
+          <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-brand-yellow text-brand-navy">
+            <Sparkles className="size-6" />
           </span>
           <div className="min-w-0 flex-1">
-            <p className="font-display font-semibold text-brand-navy">
+            <p className="font-display text-xl font-semibold text-brand-navy">
               {free.limit === 0 ? "Bring your own key" : `${freeLeft} of ${free.limit} free generation${free.limit === 1 ? "" : "s"} left`}
             </p>
-            <p className="mt-0.5 text-sm text-[#676879]">
+            <p className="mt-1 text-ui leading-relaxed text-brand-body">
               {free.limit === 0
                 ? "Generation and edits run on your own provider key."
                 : `The first version of each new site is on us, built with ${shortModel(settings.platform_model)}. Edits after that use your own key and the model you pick below.`}
@@ -204,7 +205,7 @@ export function ModelsSection() {
         </div>
 
         <SettingsCard title="Default model" description="Used for edits in every project. You can also switch it from the chat box.">
-          <div className="py-4">
+          <div className="py-5">
             <ProviderChoice providers={providers} settings={settings} onChoose={(p) => p.id !== settings.provider && choose(p.id, p.default_model)} />
           </div>
           {provider && (
@@ -213,17 +214,17 @@ export function ModelsSection() {
             </SettingsRow>
           )}
           {provider && !hasKey(settings, provider.id) && (
-            <div className="-mx-5 flex items-center gap-2 border-t border-[#fde9b3] bg-[#fffaeb] px-5 py-2.5 text-[13px] text-[#8a6100] md:-mx-6 md:px-6">
+            <div className="-mx-card flex items-center gap-2 border-t border-warning-line bg-warning-soft px-card py-3 text-sm text-warning">
               <Info className="size-4 shrink-0" /> Add a {provider.label} key below to edit your sites with this model.
             </div>
           )}
-          {error && <p className="py-2 text-sm text-[#b3263e]">{error}</p>}
+          {error && <p className="py-2 text-sm text-danger">{error}</p>}
         </SettingsCard>
 
         <SettingsCard
           title="API keys"
           description="Keys are encrypted on our server and only used for your own requests. We never show them again after saving."
-          action={<KeyRound className="size-5 text-[#c3c6d4]" />}
+          action={<KeyRound className="size-5 text-brand-subtle" />}
         >
           {providers.map((p) => (
             <KeyRow key={p.id} provider={p} saved={settings.keys.find((k) => k.provider === p.id)} />

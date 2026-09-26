@@ -24,11 +24,11 @@ export default function Surface() {
       <StagePage>
         <StageHeader eyebrow="Stage 3" title={stage.title} blurb={stage.blurb} />
         {locked && (
-          <div className="mb-6 flex items-start gap-3 rounded-2xl bg-white p-4 ring-1 ring-[#e3e5f0]">
-            <span className="grid size-9 shrink-0 place-items-center rounded-full bg-brand/10 text-brand">
+          <div className="mb-6 flex items-start gap-3 rounded-2xl bg-white p-4 shadow-clay-sm">
+            <span className="grid size-9 shrink-0 place-items-center rounded-full bg-brand/10 text-brand-dark">
               <Lock className="size-4" />
             </span>
-            <p className="text-[15px] text-[#4b4d61]">
+            <p className="text-[15px] text-brand-body">
               <strong className="text-brand-navy">Set by your direction.</strong> {directionById[direction].name} only works with one
               surface. A mismatched material (like brutalist + glass) breaks the look, so this one is chosen for you.
             </p>
@@ -46,7 +46,7 @@ export default function Surface() {
                 title={s.name}
                 subtitle={s.blurb}
                 footer={
-                  <p className="mt-1.5 text-[11px] text-[#9699a6]">
+                  <p className="mt-1.5 text-[11px] text-brand-subtle">
                     Radius {theme.radii.md}px{s.blur ? ` · blur ${s.blur}px` : ""}{s.texture ? " · grain texture" : ""}
                   </p>
                 }

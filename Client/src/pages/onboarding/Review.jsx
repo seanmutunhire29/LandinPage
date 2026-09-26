@@ -73,21 +73,21 @@ export default function Review() {
       </StageHeader>
 
       <div className="mx-auto flex max-w-3xl flex-col gap-4 pb-16">
-        <div className="flex flex-wrap items-center gap-2 text-xs text-[#676879]">
+        <div className="flex flex-wrap items-center gap-2 text-xs text-brand-muted">
           {summary.map((s) => (
-            <span key={s} className="rounded-full bg-white px-3 py-1 font-medium ring-1 ring-[#e3e5f0]">
+            <span key={s} className="rounded-full bg-white px-3 py-1 font-medium shadow-clay-sm">
               {s}
             </span>
           ))}
-          <Link to="/onboarding/direction" className="inline-flex items-center gap-1 px-1 font-semibold text-brand hover:underline">
+          <Link to="/onboarding/direction" className="inline-flex items-center gap-1 px-1 font-semibold text-brand-dark hover:underline">
             <Pencil className="size-3" /> Edit choices
           </Link>
         </div>
 
-        <section className="flex min-h-[420px] flex-col rounded-3xl bg-white p-4 ring-1 ring-[#e3e5f0] md:p-6" aria-label="Project chat">
+        <section className="flex min-h-[420px] flex-col rounded-[39px] bg-white p-5 shadow-clay md:p-7" aria-label="Project chat">
           <div className="flex flex-1 flex-col gap-4">
             <div className="flex gap-3">
-              <span className="grid size-8 shrink-0 place-items-center rounded-full bg-brand text-white">
+              <span className="grid size-8 shrink-0 place-items-center rounded-full bg-brand text-brand-navy">
                 <Sparkles className="size-4" />
               </span>
               <p className="pt-1 text-[15px] leading-relaxed text-brand-navy">
@@ -96,25 +96,25 @@ export default function Review() {
             </div>
 
             {sent && (
-              <div className="ml-8 self-end rounded-2xl rounded-br-md bg-brand px-4 py-2.5 text-[15px] whitespace-pre-wrap text-white">{sent}</div>
+              <div className="ml-8 self-end rounded-3xl rounded-br-lg bg-brand px-4 py-2.5 text-[15px] whitespace-pre-wrap text-brand-navy shadow-brand-sm">{sent}</div>
             )}
 
             {sent && !user && !authOpen && (
-              <div className="flex flex-wrap items-center gap-3 rounded-2xl bg-[#f6f7fb] p-4 text-sm text-[#676879]">
+              <div className="flex flex-wrap items-center gap-3 rounded-2xl bg-brand-mist p-4 text-sm text-brand-muted">
                 <span className="flex-1">Sign in to save your progress and start building.</span>
-                <Button onClick={() => setAuthOpen(true)} className="rounded-full bg-brand px-5 text-white hover:bg-brand-dark">
+                <Button onClick={() => setAuthOpen(true)} className="rounded-full bg-brand px-5 font-bold text-brand-navy shadow-brand-sm transition-transform duration-200 ease-spring hover:scale-[1.03] hover:bg-brand active:scale-95">
                   Continue
                 </Button>
               </div>
             )}
 
             {creating && (
-              <div className="flex items-center gap-2 text-sm text-[#676879]">
-                <Loader2 className="size-4 animate-spin text-brand" /> Setting up your project...
+              <div className="flex items-center gap-2 text-sm text-brand-muted">
+                <Loader2 className="size-4 animate-spin text-brand-dark" /> Setting up your project...
               </div>
             )}
             {error && (
-              <div className="flex flex-wrap items-center gap-3 rounded-xl bg-[#fff0f2] px-3 py-2.5 text-sm text-[#b3263e] ring-1 ring-[#ffd0d8]">
+              <div className="flex flex-wrap items-center gap-3 rounded-xl bg-danger-soft px-3 py-2.5 text-sm text-danger ring-1 ring-danger/20">
                 <span className="flex-1">Couldn't create the project: {error}</span>
                 <button onClick={create} className="font-semibold underline">
                   Try again
@@ -126,7 +126,7 @@ export default function Review() {
           {!sent && (
             <div className="mt-6 flex flex-wrap gap-2">
               {SUGGESTIONS.map((s) => (
-                <button key={s} onClick={() => submit(s)} className="rounded-full bg-[#f6f7fb] px-3 py-1.5 text-left text-xs font-medium text-[#676879] ring-1 ring-[#e3e5f0] hover:text-brand">
+                <button key={s} onClick={() => submit(s)} className="rounded-full bg-brand-mist px-3 py-1.5 text-left text-xs font-medium text-brand-muted shadow-clay-sm hover:text-brand-dark">
                   {s}
                 </button>
               ))}
@@ -142,7 +142,7 @@ export default function Review() {
           />
         </section>
 
-        <div className="flex items-center justify-between text-sm font-semibold text-[#676879]">
+        <div className="flex items-center justify-between text-sm font-semibold text-brand-muted">
           <button onClick={goBack} className="inline-flex items-center gap-2 hover:text-brand-navy">
             <ArrowLeft className="size-4" /> Back
           </button>

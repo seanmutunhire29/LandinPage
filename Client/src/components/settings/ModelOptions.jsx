@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react"
 import { Check, Loader2, Plus, Search } from "lucide-react"
 import { api } from "@/lib/api"
+import { BrandInput } from "@/components/brand/field"
 import { cn } from "@/lib/utils"
 
 // Live model lists per provider, keyed by provider + saved key so a new key refetches.
@@ -37,12 +38,12 @@ function Option({ m, selected, onSelect }) {
         type="button"
         onClick={() => onSelect(m.id)}
         className={cn(
-          "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-[13px] transition-colors hover:bg-[#f1f2f8]",
-          selected ? "font-semibold text-brand" : "text-brand-navy"
+          "flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm transition-colors hover:bg-muted",
+          selected ? "font-semibold text-brand-dark" : "text-brand-navy"
         )}
       >
         <span className="min-w-0 flex-1 truncate">{m.id}</span>
-        {m.name !== m.id && <span className="max-w-[45%] truncate text-[11px] text-[#9699a6]">{m.name}</span>}
+        {m.name !== m.id && <span className="max-w-[45%] truncate text-xs text-brand-subtle">{m.name}</span>}
         {selected && <Check className="size-3.5 shrink-0" />}
       </button>
     </li>
@@ -73,8 +74,9 @@ export function ModelOptions({ provider, value, keyStamp, onSelect, className })
   return (
     <div className={cn("flex min-h-0 flex-col", className)}>
       <div className="relative mb-1.5">
-        <Search className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-[#9699a6]" />
-        <input
+        <Search className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-brand-subtle" />
+        <BrandInput
+          size="sm"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={(e) => {
@@ -84,14 +86,14 @@ export function ModelOptions({ provider, value, keyStamp, onSelect, className })
             }
           }}
           placeholder="Search or enter a model id"
-          className="h-8 w-full rounded-md border border-[#e3e5f0] bg-[#fafbfd] pr-2 pl-8 text-[13px] text-brand-navy outline-none placeholder:text-[#9699a6] focus:border-brand/50 focus:bg-white"
+          className="pl-8"
           autoFocus
         />
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto">
         {suggested.length > 0 && (
           <>
-            <p className="px-2 pt-1 pb-0.5 text-[10px] font-semibold tracking-wider text-[#9699a6] uppercase">Suggested</p>
+            <p className="px-2 pt-1 pb-0.5 eyebrow-xs text-brand-subtle">Suggested</p>
             <ul>
               {suggested.map((m) => (
                 <Option key={m.id} m={m} selected={m.id === value} onSelect={onSelect} />
@@ -101,7 +103,7 @@ export function ModelOptions({ provider, value, keyStamp, onSelect, className })
         )}
         {rest.length > 0 && (
           <>
-            <p className="px-2 pt-2 pb-0.5 text-[10px] font-semibold tracking-wider text-[#9699a6] uppercase">All models</p>
+            <p className="px-2 pt-2 pb-0.5 eyebrow-xs text-brand-subtle">All models</p>
             <ul>
               {rest.map((m) => (
                 <Option key={m.id} m={m} selected={m.id === value} onSelect={onSelect} />
@@ -110,17 +112,17 @@ export function ModelOptions({ provider, value, keyStamp, onSelect, className })
           </>
         )}
         {live.status === "loading" && (
-          <p className="flex items-center gap-1.5 px-2 py-2 text-xs text-[#9699a6]">
+          <p className="flex items-center gap-1.5 px-2 py-2 text-xs text-brand-subtle">
             <Loader2 className="size-3 animate-spin" /> Loading models from {provider.label}...
           </p>
         )}
-        {live.status === "offline" && !query && <p className="px-2 py-2 text-xs text-[#9699a6]">Add a {provider.label} key to see every model it offers.</p>}
-        {live.status === "error" && <p className="px-2 py-2 text-xs text-[#b3263e]">{live.error}</p>}
+        {live.status === "offline" && !query && <p className="px-2 py-2 text-xs text-brand-subtle">Add a {provider.label} key to see every model it offers.</p>}
+        {live.status === "error" && <p className="px-2 py-2 text-xs text-danger">{live.error}</p>}
         {custom && !exact && (
           <button
             type="button"
             onClick={() => onSelect(custom)}
-            className="mt-1 flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-[13px] text-brand transition-colors hover:bg-[#eef0fb]"
+            className="mt-1 flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm text-brand-dark transition-colors hover:bg-secondary"
           >
             <Plus className="size-3.5" /> Use <span className="truncate font-semibold">{custom}</span>
           </button>

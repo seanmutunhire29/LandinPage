@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from "react"
 import { ArrowUp, Loader2 } from "lucide-react"
+import { brandButtonVariants } from "@/components/brand/button"
 import { cn } from "@/lib/utils"
 
 function Kbd({ children }) {
-  return <kbd className="rounded border border-[#e3e5f0] bg-[#f6f7fb] px-1 font-sans text-[10px] font-semibold text-[#676879]">{children}</kbd>
+  return <kbd className="rounded-lg bg-white px-1.5 font-sans shadow-clay-sm text-xs font-semibold text-brand-muted">{children}</kbd>
 }
 
 /**
@@ -37,8 +38,8 @@ export function ChatInput({ onSubmit, busy = false, activity, disabled = false, 
       }}
       data-busy={busy || undefined}
       className={cn(
-        "relative overflow-hidden rounded-xl bg-white shadow-[0_1px_2px_rgb(24_27_52/0.05),0_6px_16px_-10px_rgb(24_27_52/0.15)] ring-1 transition-[box-shadow,background-color]",
-        busy ? "bg-[#fbfbff] ring-brand/35" : "ring-[#e3e5f0] focus-within:ring-2 focus-within:ring-brand/45",
+        "relative overflow-hidden rounded-[26px] bg-brand-fill shadow-clay-inset transition-[background-color,box-shadow] duration-200",
+        busy ? "ring-2 ring-brand/40" : "focus-within:bg-white focus-within:ring-4 focus-within:ring-brand/30",
         className
       )}
     >
@@ -61,14 +62,14 @@ export function ChatInput({ onSubmit, busy = false, activity, disabled = false, 
           }
         }}
         placeholder={busy ? "Draft your next change while it works..." : placeholder}
-        className="block max-h-60 min-h-12 w-full resize-none bg-transparent px-3.5 pt-3 pb-1 text-[15px] leading-relaxed text-brand-navy outline-none placeholder:text-[#9699a6] disabled:opacity-50"
+        className="block max-h-60 min-h-12 w-full resize-none bg-transparent px-4 pt-3.5 pb-1 text-ui leading-relaxed text-brand-navy outline-none placeholder:text-brand-subtle disabled:opacity-50"
         aria-label="Message"
       />
       <div className={cn("@container flex items-center gap-2 px-2 pb-2", toolbar ? "pl-2" : "pl-3.5")}>
         {toolbar}
-        <div className="min-w-0 flex-1 text-[11px]" aria-live="polite">
+        <div className="min-w-0 flex-1 text-xs" aria-live="polite">
           {busy ? (
-            <span className="flex min-w-0 items-center gap-1.5 font-semibold text-brand">
+            <span className="flex min-w-0 items-center gap-1.5 font-semibold text-brand-dark">
               <span className="relative flex size-2 shrink-0">
                 <span className="absolute inset-0 animate-ping rounded-full bg-brand/50" />
                 <span className="relative size-2 rounded-full bg-brand" />
@@ -76,7 +77,7 @@ export function ChatInput({ onSubmit, busy = false, activity, disabled = false, 
               <span className="truncate">{activity ?? "Working"}</span>
             </span>
           ) : (
-            <span className={cn("items-center gap-1 text-[#9699a6]", toolbar ? "hidden justify-end @xs:flex" : "flex")}>
+            <span className={cn("items-center gap-1 text-brand-subtle", toolbar ? "hidden justify-end @sm:flex" : "flex")}>
               <Kbd>Enter</Kbd> to send <span className="px-0.5">·</span> <Kbd>Shift</Kbd>+<Kbd>Enter</Kbd> new line
             </span>
           )}
@@ -85,10 +86,11 @@ export function ChatInput({ onSubmit, busy = false, activity, disabled = false, 
           type="submit"
           disabled={!ready}
           className={cn(
-            "grid size-9 shrink-0 place-items-center rounded-lg transition-all duration-150",
-            ready && "bg-brand text-white shadow-[0_4px_12px_-4px_rgb(97_97_255/0.7)] hover:bg-brand-dark active:scale-95",
-            !ready && busy && "bg-brand/10 text-brand",
-            !ready && !busy && "bg-[#eef0fb] text-brand/35"
+            brandButtonVariants({ size: "icon" }),
+            "disabled:opacity-100",
+            ready && "shadow-brand-sm active:scale-95",
+            !ready && busy && "bg-brand/10 text-brand-dark",
+            !ready && !busy && "bg-secondary text-brand/35"
           )}
           aria-label={busy ? "Agent is working" : "Send"}
         >

@@ -19,7 +19,7 @@ export function WizardLayout() {
   return (
     <TooltipProvider>
       <div className="min-h-svh bg-brand-mist">
-        <header className="sticky top-0 z-40 border-b border-[#e3e5f0] bg-white/90 backdrop-blur">
+        <header className="sticky top-0 z-40 bg-white/90 shadow-[0_12px_30px_-20px_rgb(59_7_100/0.4)] backdrop-blur">
           <div className="mx-auto flex max-w-6xl items-center gap-6 px-5 py-3 md:px-8">
             <Link to="/" className="shrink-0" aria-label="LandinPage home">
               <Logo />
@@ -29,7 +29,7 @@ export function WizardLayout() {
             </div>
             <Link
               to="/"
-              className="grid size-9 shrink-0 place-items-center rounded-full text-[#676879] hover:bg-[#f1f2f8] hover:text-brand-navy"
+              className="grid size-9 shrink-0 place-items-center rounded-full text-brand-muted transition-[transform,background-color] duration-200 ease-spring hover:scale-110 hover:bg-brand-fill hover:text-brand-navy active:scale-95"
               aria-label="Exit onboarding"
             >
               <X className="size-5" />

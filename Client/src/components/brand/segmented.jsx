@@ -2,10 +2,12 @@ import { useRef } from "react"
 import { cn } from "@/lib/utils"
 
 /**
- * Segmented control with a sliding brand indicator. Segments are equal width so
- * the indicator can move by whole steps. Arrow keys move the selection.
+ * Pill segmented control with a springy sliding clay indicator: the app's toggle for
+ * picking one of a few options. Segments are equal width so the indicator can move
+ * by whole steps. Arrow keys move the selection. Options with an `Icon` show only
+ * the icon below md; `iconOnly` hides the text labels at every size.
  */
-export function ViewSwitch({ options, value, onChange, label }) {
+export function Segmented({ options, value, onChange, label, iconOnly = false, className }) {
   const refs = useRef([])
   const index = Math.max(0, options.findIndex((o) => o.id === value))
 
@@ -23,13 +25,13 @@ export function ViewSwitch({ options, value, onChange, label }) {
       role="radiogroup"
       aria-label={label}
       onKeyDown={onKeyDown}
-      className="relative grid rounded-[calc(var(--radius)*0.9)] bg-[#f1f2f8] p-[3px] ring-1 ring-[#e3e5f0] ring-inset"
+      className={cn("relative grid rounded-full bg-brand-fill p-1 shadow-clay-inset", className)}
       style={{ gridTemplateColumns: `repeat(${options.length}, minmax(0, 1fr))` }}
     >
       <span
         aria-hidden
-        className="absolute inset-y-[3px] left-[3px] rounded-md bg-brand shadow-[0_1px_2px_rgb(24_27_52/0.12),0_4px_12px_-4px_rgb(97_97_255/0.55)] transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]"
-        style={{ width: `calc((100% - 6px) / ${options.length})`, transform: `translateX(${index * 100}%)` }}
+        className="absolute inset-y-1 left-1 rounded-full bg-brand shadow-brand-sm transition-transform duration-450 ease-spring"
+        style={{ width: `calc((100% - 8px) / ${options.length})`, transform: `translateX(${index * 100}%)` }}
       />
       {options.map(({ id, label, Icon }, i) => {
         const active = i === index
@@ -40,15 +42,16 @@ export function ViewSwitch({ options, value, onChange, label }) {
             role="radio"
             aria-checked={active}
             aria-label={label}
+            title={iconOnly ? label : undefined}
             tabIndex={active ? 0 : -1}
             onClick={() => onChange(id)}
             className={cn(
-              "relative z-10 inline-flex h-7 items-center justify-center gap-1.5 rounded-md px-2.5 text-xs font-semibold transition-colors duration-200 outline-none focus-visible:ring-2 focus-visible:ring-brand/40 focus-visible:ring-offset-1",
-              active ? "text-white" : "text-[#676879] hover:text-brand-navy"
+              "relative z-10 inline-flex h-7 items-center justify-center gap-1.5 rounded-full px-3 text-sm font-bold whitespace-nowrap transition-colors duration-200 outline-none focus-visible:ring-4 focus-visible:ring-brand/30",
+              active ? "text-brand-navy" : "text-brand-muted hover:text-brand-navy"
             )}
           >
-            <Icon className="size-3.5" strokeWidth={2.25} />
-            <span className="hidden md:inline">{label}</span>
+            {Icon && <Icon className="size-3.5" strokeWidth={2.25} />}
+            {!iconOnly && <span className={cn(Icon && "hidden md:inline")}>{label}</span>}
           </button>
         )
       })}

@@ -24,7 +24,7 @@ const STEPS = [
 ]
 
 const Tag = ({ children, icon: Icon }) => (
-  <span className="inline-flex items-center gap-1 rounded-full bg-[#f1f2f8] px-2 py-0.5 text-[11px] font-semibold text-[#676879]">
+  <span className="inline-flex items-center gap-1 rounded-full bg-brand-fill px-2 py-0.5 text-[11px] font-semibold text-brand-muted">
     <Icon className="size-3" /> {children}
   </span>
 )
@@ -75,7 +75,7 @@ function VariantsStep({ theme, direction, sections, setSectionVariant }) {
             href={`#section-${s.type}`}
             className={cn(
               "rounded-full px-3 py-1 text-sm font-medium",
-              s.variant ? "bg-brand/10 text-brand-navy" : "bg-white text-[#676879] ring-1 ring-[#e3e5f0]"
+              s.variant ? "bg-brand/10 text-brand-navy" : "bg-white text-brand-muted shadow-clay-sm"
             )}
           >
             {s.variant ? "✓ " : ""}
@@ -90,7 +90,7 @@ function VariantsStep({ theme, direction, sections, setSectionVariant }) {
           <section key={s.type} id={`section-${s.type}`} className="scroll-mt-28">
             <div className="mb-4 flex flex-wrap items-center gap-2">
               <span className="grid size-7 place-items-center rounded-full bg-brand-navy text-xs font-bold text-white">{i + 1}</span>
-              <h2 className="font-display text-xl font-bold text-brand-navy">{type.name}</h2>
+              <h2 className="font-display text-xl font-semibold text-brand-navy">{type.name}</h2>
               {type.contentBearing && <Tag icon={FileText}>Needs content</Tag>}
             </div>
             <OptionGrid label={`${type.name} layouts`} cols="sm:grid-cols-2 lg:grid-cols-4" className="gap-4">
@@ -126,18 +126,18 @@ function SectionRow({ section, index, count, theme, pinned, onMove }) {
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition }}
       className={cn(
-        "flex items-center gap-4 rounded-2xl bg-white p-3 pr-4 ring-1 ring-[#e3e5f0]",
+        "flex items-center gap-4 rounded-2xl bg-white p-3 pr-4 shadow-clay-sm",
         isDragging && "relative z-10 shadow-[0_16px_40px_-12px_rgba(24,27,52,0.35)] ring-brand"
       )}
     >
       {pinned ? (
-        <span className="grid size-9 place-items-center text-[#9699a6]" title="Pinned">
+        <span className="grid size-9 place-items-center text-brand-subtle" title="Pinned">
           <Pin className="size-4" />
         </span>
       ) : (
         <button
           type="button"
-          className="grid size-9 cursor-grab touch-none place-items-center rounded-lg text-[#676879] hover:bg-[#f1f2f8] active:cursor-grabbing"
+          className="grid size-9 cursor-grab touch-none place-items-center rounded-lg text-brand-muted hover:bg-brand-fill active:cursor-grabbing"
           aria-label={`Drag ${type.name}`}
           {...attributes}
           {...listeners}
@@ -145,17 +145,17 @@ function SectionRow({ section, index, count, theme, pinned, onMove }) {
           <GripVertical className="size-5" />
         </button>
       )}
-      <div className="hidden w-40 shrink-0 overflow-hidden rounded-lg ring-1 ring-[#eef0f6] sm:block">
+      <div className="hidden w-40 shrink-0 overflow-hidden rounded-lg shadow-clay-sm sm:block">
         <ThemeScope theme={theme}>
           <Wireframe wire={variant.wire} className="pointer-events-none min-h-24 p-2.5" />
         </ThemeScope>
       </div>
       <div className="min-w-0 flex-1">
         <p className="font-display font-semibold text-brand-navy">
-          <span className="mr-2 text-[#9699a6]">{index + 1}.</span>
+          <span className="mr-2 text-brand-subtle">{index + 1}.</span>
           {type.name}
         </p>
-        <p className="truncate text-sm text-[#676879]">{variant.name}</p>
+        <p className="truncate text-sm text-brand-muted">{variant.name}</p>
       </div>
       {!pinned && (
         <div className="flex gap-1">
@@ -163,7 +163,7 @@ function SectionRow({ section, index, count, theme, pinned, onMove }) {
             type="button"
             onClick={() => onMove(index, index - 1)}
             disabled={index <= 1}
-            className="grid size-8 place-items-center rounded-lg text-[#676879] hover:bg-[#f1f2f8] disabled:opacity-30"
+            className="grid size-8 place-items-center rounded-lg text-brand-muted hover:bg-brand-fill disabled:opacity-30"
             aria-label={`Move ${type.name} up`}
           >
             <ArrowUp className="size-4" />
@@ -172,7 +172,7 @@ function SectionRow({ section, index, count, theme, pinned, onMove }) {
             type="button"
             onClick={() => onMove(index, index + 1)}
             disabled={index >= count - 2}
-            className="grid size-8 place-items-center rounded-lg text-[#676879] hover:bg-[#f1f2f8] disabled:opacity-30"
+            className="grid size-8 place-items-center rounded-lg text-brand-muted hover:bg-brand-fill disabled:opacity-30"
             aria-label={`Move ${type.name} down`}
           >
             <ArrowDown className="size-4" />

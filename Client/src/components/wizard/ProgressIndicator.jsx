@@ -13,11 +13,11 @@ export function ProgressIndicator({ currentIndex }) {
   return (
     <nav aria-label="Onboarding progress" className="w-full">
       <div className="mb-2 flex items-baseline justify-between text-sm">
-        <span className="font-semibold text-brand-navy">
+        <span className="font-display font-semibold text-brand-navy">
           Step {currentIndex + 1} of {total}
-          <span className="font-normal text-[#676879]"> · {STAGES[currentIndex].label}</span>
+          <span className="font-normal text-brand-muted"> · {STAGES[currentIndex].label}</span>
         </span>
-        <span className="text-[#676879]">{remaining === 0 ? "Last step" : `${remaining} to go`}</span>
+        <span className="text-brand-muted">{remaining === 0 ? "Last step" : `${remaining} to go`}</span>
       </div>
       <ol className="flex gap-1.5">
         {STAGES.map((stage, i) => {
@@ -28,17 +28,17 @@ export function ProgressIndicator({ currentIndex }) {
             <>
               <span
                 className={cn(
-                  "block h-2 rounded-full transition-colors",
-                  current ? "bg-brand" : done ? "bg-brand/45" : "bg-[#e3e5f0]"
+                  "block h-2.5 rounded-full transition-colors duration-450",
+                  current ? "bg-brand shadow-brand-sm" : done ? "bg-brand/50" : "bg-brand-fill shadow-clay-inset"
                 )}
               />
               <span
                 className={cn(
                   "mt-1.5 hidden items-center gap-1 text-xs lg:flex",
-                  current ? "font-semibold text-brand-navy" : "text-[#676879]"
+                  current ? "font-semibold text-brand-navy" : "text-brand-muted"
                 )}
               >
-                {done && !current && <Check className="size-3 text-brand" strokeWidth={3} />}
+                {done && !current && <Check className="size-3 text-brand-dark" strokeWidth={3} />}
                 {stage.label}
               </span>
             </>

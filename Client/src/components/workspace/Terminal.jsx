@@ -13,7 +13,7 @@ export function Terminal() {
   }, [entries])
 
   return (
-    <div className="h-full overflow-y-auto bg-[#141414] p-3 font-mono text-[11px] leading-relaxed text-white/70">
+    <div className="h-full overflow-y-auto bg-brand-navy p-3 font-mono text-xs leading-relaxed text-white/70">
       {entries.length === 0 && <p className="text-white/30">Commands will appear here.</p>}
       {entries.map((t) => (
         <div key={t.id} className="mb-3">
@@ -27,7 +27,7 @@ export function Terminal() {
             )}
             <span className="text-brand-green">$</span> {t.command}
             {t.source === "agent" && (
-              <span className="inline-flex items-center gap-1 rounded bg-white/10 px-1.5 text-[10px] text-white/60">
+              <span className="inline-flex items-center gap-1 rounded-full bg-white/10 px-1.5 text-xs text-white/60">
                 <Bot className="size-2.5" /> agent
               </span>
             )}

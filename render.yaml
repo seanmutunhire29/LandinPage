@@ -1,0 +1,64 @@
+# Render Blueprint: Dashboard -> New -> Blueprint -> pick this repo.
+# Secrets marked `sync: false` are prompted for on first deploy.
+services:
+  # FastAPI backend (REST + the agent WebSocket)
+  - type: web
+    name: landinpage-api
+    runtime: python
+    rootDir: server
+    plan: free
+    buildCommand: uv sync --frozen
+    startCommand: uv run uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.8
+      - key: OPENROUTER_API_KEY
+        sync: false
+      - key: OPENROUTER_BASE_URL
+        value: https://openrouter.ai/api/v1
+      - key: AGENT_MODEL
+        value: anthropic/claude-haiku-4.5
+      - key: AGENT_MAX_TOKENS
+        value: "8000"
+      - key: FREE_GENERATIONS
+        value: "3"
+      - key: KEY_ENCRYPTION_SECRET
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: SUPABASE_JWT_SECRET
+        sync: false
+      # Frontend origin(s), comma-separated, e.g. https://landinpage-web.onrender.com
+      - key: CORS_ORIGINS
+        sync: false
+
+  # Vite frontend
+  - type: web
+    name: landinpage-web
+    runtime: static
+    rootDir: Client
+    buildCommand: npm ci && npm run build
+    staticPublishPath: dist
+    # WebContainers need a cross-origin isolated page (same headers as vite.config.js)
+    headers:
+      - path: /*
+        name: Cross-Origin-Embedder-Policy
+        value: credentialless
+      - path: /*
+        name: Cross-Origin-Opener-Policy
+        value: same-origin
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_SUPABASE_URL
+        sync: false
+      - key: VITE_SUPABASE_ANON_KEY
+        sync: false
+      # Backend URL, e.g. https://landinpage-api.onrender.com
+      - key: VITE_API_URL
+        sync: false

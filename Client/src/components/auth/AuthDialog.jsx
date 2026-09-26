@@ -55,10 +55,10 @@ export function AuthDialog({ open, onOpenChange, onAuthenticated, redirectTo, ti
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="rounded-[39px] p-7 shadow-float ring-0">
         {confirmSent ? (
           <div className="flex flex-col items-center gap-3 py-4 text-center">
-            <MailCheck className="size-10 text-brand" />
+            <MailCheck className="size-10 text-brand-dark" />
             <DialogTitle>Check your inbox</DialogTitle>
             <DialogDescription>
               We sent a confirmation link to <span className="font-semibold text-brand-navy">{email}</span>. Open it in this browser and
@@ -72,7 +72,7 @@ export function AuthDialog({ open, onOpenChange, onAuthenticated, redirectTo, ti
               <DialogDescription>{description ?? "Sign in to save your projects."}</DialogDescription>
             </DialogHeader>
 
-            <Button variant="outline" size="lg" className="h-11 rounded-full" onClick={google} disabled={Boolean(busy)}>
+            <Button variant="outline" size="lg" className="h-11 rounded-full border-0 bg-white font-bold shadow-clay-sm ring-2 ring-brand/50 ring-inset transition-transform duration-200 ease-spring hover:scale-[1.03] hover:bg-white active:scale-95" onClick={google} disabled={Boolean(busy)}>
               {busy === "google" ? <Loader2 className="animate-spin" /> : <GoogleIcon />}
               Continue with Google
             </Button>
@@ -82,16 +82,16 @@ export function AuthDialog({ open, onOpenChange, onAuthenticated, redirectTo, ti
             </div>
 
             <Tabs value={mode} onValueChange={(v) => { setMode(v); setError(null) }}>
-              <TabsList className="w-full">
-                <TabsTrigger value="signup">Sign up</TabsTrigger>
-                <TabsTrigger value="login">Log in</TabsTrigger>
+              <TabsList className="h-11 w-full rounded-full bg-brand-fill p-1 shadow-clay-inset">
+                <TabsTrigger value="signup" className="rounded-full font-bold data-active:bg-brand data-active:text-brand-navy data-active:shadow-brand-sm">Sign up</TabsTrigger>
+                <TabsTrigger value="login" className="rounded-full font-bold data-active:bg-brand data-active:text-brand-navy data-active:shadow-brand-sm">Log in</TabsTrigger>
               </TabsList>
             </Tabs>
 
             <form onSubmit={submit} className="flex flex-col gap-3">
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor="auth-email">Email</Label>
-                <Input id="auth-email" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} className="h-10" />
+                <Input id="auth-email" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} className="h-11 rounded-2xl border-0 bg-brand-fill px-3.5 shadow-clay-inset focus-visible:bg-white focus-visible:ring-4 focus-visible:ring-brand/30" />
               </div>
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor="auth-password">Password</Label>
@@ -103,11 +103,11 @@ export function AuthDialog({ open, onOpenChange, onAuthenticated, redirectTo, ti
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="h-10"
+                  className="h-11 rounded-2xl border-0 bg-brand-fill px-3.5 shadow-clay-inset focus-visible:bg-white focus-visible:ring-4 focus-visible:ring-brand/30"
                 />
               </div>
               {error && <p className="text-sm text-destructive">{error}</p>}
-              <Button type="submit" size="lg" className="h-11 rounded-full bg-brand text-white hover:bg-brand-dark" disabled={Boolean(busy)}>
+              <Button type="submit" size="lg" className="h-11 rounded-full bg-brand font-bold text-brand-navy shadow-brand-sm transition-transform duration-200 ease-spring hover:scale-[1.03] hover:bg-brand active:scale-95" disabled={Boolean(busy)}>
                 {busy === "email" && <Loader2 className="animate-spin" />}
                 {mode === "signup" ? "Create account" : "Log in"}
               </Button>

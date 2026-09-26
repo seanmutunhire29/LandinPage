@@ -1,0 +1,44 @@
+# Self-hosted stack: API + static frontend, exposed only through a Cloudflare Tunnel.
+# Nothing listens on a public port. The 127.0.0.1 bindings are for debugging on the box
+# (or via `ssh -L` over Tailscale).
+#
+#   cp .env.example .env          # tunnel token + frontend build vars
+#   cp server/.env.example server/.env
+#   docker compose up -d --build
+
+services:
+  api:
+    build: ./server
+    env_file: ./server/.env
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8000:8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+  web:
+    build:
+      context: ./Client
+      args:
+        VITE_SUPABASE_URL: ${VITE_SUPABASE_URL:?set in .env}
+        VITE_SUPABASE_ANON_KEY: ${VITE_SUPABASE_ANON_KEY:?set in .env}
+        VITE_API_URL: ${VITE_API_URL:?set in .env}
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8080:80"
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    command: tunnel --no-autoupdate run
+    environment:
+      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN:?set in .env}
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+      web:
+        condition: service_started

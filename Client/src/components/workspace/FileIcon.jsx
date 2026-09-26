@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils"
 // Brand hues, lifted for contrast on the dark editor chrome.
 const TYPES = [
   { test: (n) => n === "package.json", Icon: Package, color: "text-[#33d68e]" },
-  { test: (n) => /(^\.|\.config\.[cm]?[jt]s$|^tsconfig|^jsconfig|lock\.json$|^\.?env)/.test(n), Icon: Settings2, color: "text-[#9699a6]" },
+  { test: (n) => /(^\.|\.config\.[cm]?[jt]s$|^tsconfig|^jsconfig|lock\.json$|^\.?env)/.test(n), Icon: Settings2, color: "text-brand-subtle" },
   { test: (n) => /\.[jt]sx$/.test(n), Icon: Atom, color: "text-[#7fb3fd]" },
   { test: (n) => /\.[cm]?[jt]s$/.test(n), Icon: FileCode2, color: "text-[#ffd84d]" },
   { test: (n) => /\.(css|scss)$/.test(n), Icon: Hash, color: "text-[#a0a0ff]" },
