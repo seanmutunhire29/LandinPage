@@ -82,35 +82,35 @@ Open http://localhost:5173. The full Supabase setup (auth redirect URLs, Google 
 `docker-compose.yml` runs three containers:
 
 - **`api`**: the FastAPI server ([server/Dockerfile](server/Dockerfile)).
-- **`web`**: the built frontend served by Caddy with the COOP/COEP headers ([Client/Dockerfile](Client/Dockerfile), [Client/Caddyfile](Client/Caddyfile)).
+- **`web`**: Caddy serving the built frontend with the COOP/COEP headers, and proxying `/api/*` (including the WebSocket) to `api` ([Client/Dockerfile](Client/Dockerfile), [Client/Caddyfile](Client/Caddyfile)).
 - **`cloudflared`**: an outbound-only tunnel to Cloudflare. The server needs no open inbound ports, so SSH can stay on Tailscale only.
 
-**1. Create the tunnel** (the domain must be on Cloudflare). In **Zero Trust → Networks → Tunnels → Create a tunnel → Cloudflared**, name it and copy the token from the install command. You don't need to run that command. Then add two public hostnames:
+Everything runs on one hostname, so there's one tunnel route and no cross-origin API calls:
 
-| Public hostname | Service |
-| --- | --- |
-| `app.example.com` | `HTTP` → `web:80` |
-| `api.example.com` | `HTTP` → `api:8000` |
+```
+https://landinpage.infinityrecursion.net/        -> web (static SPA)
+https://landinpage.infinityrecursion.net/api/*   -> web -> api:8000 (prefix stripped)
+```
 
-The service names resolve inside the Compose network. WebSockets work through the tunnel by default, and the client pings every 25 s, so Cloudflare's idle timeout won't drop agent runs.
+**1. Create the tunnel** (the domain must be on Cloudflare). In **Zero Trust → Networks → Tunnels → Create a tunnel → Cloudflared**, name it and copy the token from the install command. You don't need to run that command. Add one public hostname: subdomain `landinpage`, domain `infinityrecursion.net`, service `HTTP` → `web:80`. The DNS record is created for you.
 
 **2. On the server** (over Tailscale SSH), with Docker Engine and the Compose plugin installed:
 
 ```bash
-git clone <this repo> landinpage && cd landinpage
-cp .env.example .env                  # CLOUDFLARE_TUNNEL_TOKEN, VITE_* (VITE_API_URL=https://api.example.com)
-cp server/.env.example server/.env    # API secrets; CORS_ORIGINS=https://app.example.com
+git clone https://github.com/seanmutunhire29/LandinPage.git landinpage && cd landinpage
+cp .env.example .env                  # CLOUDFLARE_TUNNEL_TOKEN, VITE_SUPABASE_*, VITE_API_URL
+cp server/.env.example server/.env    # API secrets; CORS_ORIGINS=https://landinpage.infinityrecursion.net
 docker compose up -d --build
 docker compose logs -f cloudflared    # should show "Registered tunnel connection"
 ```
 
-**3. Supabase:** add `https://app.example.com/auth/callback` to the auth redirect URLs and set the Site URL.
+**3. Supabase:** in **Authentication → URL Configuration**, set the Site URL to `https://landinpage.infinityrecursion.net` and add `https://landinpage.infinityrecursion.net/auth/callback` to the redirect URLs.
 
 **Updating:** `git pull && docker compose up -d --build`. The `VITE_*` values are compiled into the bundle, so rebuild `web` after changing them.
 
-**Debugging on the box:** the API and web containers are bound to `127.0.0.1:8000` and `127.0.0.1:8080`. From your laptop, run `ssh -L 8080:localhost:8080 <tailscale-host>` to reach them without going through Cloudflare.
+**Debugging on the box:** the web and API containers are bound to `127.0.0.1:8080` and `127.0.0.1:8000`. From your laptop, run `ssh -L 8080:localhost:8080 <tailscale-host>` to reach them without going through Cloudflare. Sign-in will redirect to the production URL, so use this to check that the app is being served, not to test auth.
 
-**Cloudflare settings:** leave Rocket Loader off for these hostnames. It rewrites script tags and can break the app.
+**Cloudflare settings:** leave Rocket Loader off. It rewrites script tags and can break the app. WebSockets work through the tunnel by default, and the client pings every 25 s, so Cloudflare's idle timeout won't drop agent runs.
 
 ### Render
 
