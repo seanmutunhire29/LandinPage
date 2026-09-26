@@ -108,7 +108,7 @@ docker compose logs -f cloudflared    # should show "Registered tunnel connectio
 
 **Updating:** `git pull && docker compose up -d --build`. The `VITE_*` values are compiled into the bundle, so rebuild `web` after changing them.
 
-**Debugging on the box:** the web and API containers are bound to `127.0.0.1:8080` and `127.0.0.1:8000`. From your laptop, run `ssh -L 8080:localhost:8080 <tailscale-host>` to reach them without going through Cloudflare. Sign-in will redirect to the production URL, so use this to check that the app is being served, not to test auth.
+**Debugging on the box:** the web container is bound to `127.0.0.1:8088` (change it with `WEB_DEBUG_PORT` in `.env`). `curl localhost:8088/api/health` checks both containers. From your laptop, run `ssh -L 8088:localhost:8088 <tailscale-host>` to reach it without going through Cloudflare. The API has no host port. Sign-in will redirect to the production URL, so use this to check that the app is being served, not to test auth.
 
 **Cloudflare settings:** leave Rocket Loader off. It rewrites script tags and can break the app. WebSockets work through the tunnel by default, and the client pings every 25 s, so Cloudflare's idle timeout won't drop agent runs.
 
