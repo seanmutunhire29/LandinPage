@@ -358,7 +358,7 @@ def describe_error(e: Exception, llm: ResolvedModel | None = None) -> dict:
         if e.status_code in (401, 403):
             if own:
                 return {"code": "invalid_key", "message": f"{name} rejected your API key. Replace it in Settings, then try again."}
-            return {"code": "provider_error", "message": "The built-in model's API key was rejected. Check OPENROUTER_API_KEY in server/.env."}
+            return {"code": "provider_error", "message": "The built-in model's API key was rejected. An admin needs to update it in the admin dashboard."}
         if e.status_code == 404:
             model = llm.model if llm else "the selected model"
             return {"code": "bad_model", "message": f"{name} doesn't offer {model}, or your key can't use it. Pick another model and try again."}

@@ -63,9 +63,8 @@ function ModelCombobox({ provider, settings, onSelect }) {
   )
 }
 
-function KeyRow({ provider, saved }) {
-  const saveKey = useAccountStore((s) => s.saveKey)
-  const deleteKey = useAccountStore((s) => s.deleteKey)
+/** One provider's API key: status, add/replace form, and remove (when `onDelete` is given). */
+export function KeyRow({ provider, saved, onSave, onDelete, note }) {
   const [editing, setEditing] = useState(false)
   const [value, setValue] = useState("")
   const [show, setShow] = useState(false)
@@ -109,8 +108,8 @@ function KeyRow({ provider, saved }) {
             <BrandButton type="button" variant="outline" size="sm" onClick={() => setEditing(true)}>
               {saved ? "Replace" : "Add key"}
             </BrandButton>
-            {saved && (
-              <BrandButton type="button" variant="danger" size="sm" disabled={busy === "delete"} onClick={() => run("delete", () => deleteKey(provider.id))}>
+            {saved && onDelete && (
+              <BrandButton type="button" variant="danger" size="sm" disabled={busy === "delete"} onClick={() => run("delete", () => onDelete(provider.id))}>
                 {busy === "delete" ? <Loader2 className="animate-spin" /> : "Remove"}
               </BrandButton>
             )}
@@ -121,7 +120,7 @@ function KeyRow({ provider, saved }) {
         <form
           onSubmit={(e) => {
             e.preventDefault()
-            if (value.trim()) run("save", () => saveKey(provider.id, value.trim()))
+            if (value.trim()) run("save", () => onSave(provider.id, value.trim()))
           }}
           className="mt-4 flex flex-wrap items-center gap-2 sm:pl-11"
         >
@@ -159,6 +158,7 @@ function KeyRow({ provider, saved }) {
           </BrandButton>
         </form>
       )}
+      {note && <p className="mt-2 text-xs text-brand-subtle sm:pl-11">{note}</p>}
       {error && <p className="mt-2 text-xs text-danger sm:pl-11">{error}</p>}
     </div>
   )
@@ -168,6 +168,8 @@ export function ModelsSection() {
   const settings = useAccountStore((s) => s.settings)
   const providers = useAccountStore((s) => s.providers)
   const selectModel = useAccountStore((s) => s.selectModel)
+  const saveKey = useAccountStore((s) => s.saveKey)
+  const deleteKey = useAccountStore((s) => s.deleteKey)
   const [error, setError] = useState(null)
   const provider = providerById(providers, settings.provider)
 
@@ -227,7 +229,7 @@ export function ModelsSection() {
           action={<KeyRound className="size-5 text-brand-subtle" />}
         >
           {providers.map((p) => (
-            <KeyRow key={p.id} provider={p} saved={settings.keys.find((k) => k.provider === p.id)} />
+            <KeyRow key={p.id} provider={p} saved={settings.keys.find((k) => k.provider === p.id)} onSave={saveKey} onDelete={deleteKey} />
           ))}
         </SettingsCard>
       </div>

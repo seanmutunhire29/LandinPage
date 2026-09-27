@@ -12,6 +12,8 @@ const ACTIONS = {
   "user.demote": ["Removed admin", "warning"],
   "user.delete": ["Deleted user", "danger"],
   "settings.update": ["Updated model & limits", "brand"],
+  "platform_key.update": ["Saved built-in model key", "brand"],
+  "platform_key.delete": ["Removed built-in model key", "warning"],
   "system_prompt.update": ["Edited system prompt", "brand"],
   "system_prompt.reset": ["Reset system prompt", "warning"],
   "announcement.update": ["Updated announcement", "neutral"],

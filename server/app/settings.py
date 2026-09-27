@@ -11,7 +11,10 @@ from typing import Any
 from app import config, db
 
 DEFAULTS: dict[str, Any] = {
+    "platform_provider": "openrouter",
     "platform_model": config.AGENT_MODEL,
+    # {provider_id: {"encrypted": Fernet token, "last4": str}}. Never sent to the browser.
+    "platform_keys": {},
     "free_generations": config.FREE_GENERATIONS,
     "default_token_budget": config.DEFAULT_TOKEN_BUDGET,
     "max_tokens": config.AGENT_MAX_TOKENS,
@@ -20,7 +23,7 @@ DEFAULTS: dict[str, Any] = {
     "announcement": {"enabled": False, "message": "", "level": "info"},
 }
 
-PLATFORM_KEYS = ("platform_model", "free_generations", "default_token_budget", "max_tokens", "platform_enabled")
+PLATFORM_KEYS = ("platform_provider", "platform_model", "free_generations", "default_token_budget", "max_tokens", "platform_enabled")
 
 _TTL = 30.0
 _cache: dict[str, Any] | None = None

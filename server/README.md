@@ -31,7 +31,7 @@ cd ../Client && npm install && cp .env.example .env && npm run dev
 
 | Variable | Default | Description |
 | --- | --- | --- |
-| `OPENROUTER_API_KEY` | | Platform key that pays for free first generations. Without it, users always need their own key. |
+| `OPENROUTER_API_KEY` | | Fallback platform key for free first generations when no key is saved in the admin dashboard. |
 | `OPENROUTER_BASE_URL` | `https://openrouter.ai/api/v1` | |
 | `AGENT_MODEL` | `anthropic/claude-haiku-4.5` | Model used for free generations. |
 | `AGENT_MAX_TOKENS` | `8000` | Output cap per model call. Lower it if OpenRouter returns 402 "can only afford N tokens". |
@@ -77,7 +77,7 @@ Sign out and back in so your token carries the role, then open **Admin dashboard
 
 - see every account with its usage, set per-user free-generation and token-budget overrides, suspend, or delete accounts;
 - browse any project's chat, files and design spec (read-only);
-- change the built-in model, output cap and default limits, or pause the built-in model;
+- choose the built-in (free) model's provider, model and API key, the output cap and default limits, or pause it. Keys saved there are encrypted with `KEY_ENCRYPTION_SECRET`; `OPENROUTER_API_KEY` is only the fallback when no key is saved;
 - edit the agent's system prompt (previous versions are kept in the audit log);
 - post a site-wide announcement banner;
 - view signups, token usage and platform spend, and the audit log of every admin change.

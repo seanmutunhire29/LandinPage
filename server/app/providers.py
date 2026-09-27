@@ -3,7 +3,8 @@
 Every provider here speaks the OpenAI Chat Completions API (Anthropic through its
 OpenAI SDK compatibility endpoint), so the agent loop has one code path.
 
-Key policy: a project's first generation runs on the platform OpenRouter key while
+Key policy: a project's first generation runs on the platform key (provider, model
+and key chosen by an admin; OPENROUTER_API_KEY is the fallback) while
 the account has free generations and platform token budget left (admin settings,
 see app.settings). Every later turn, and any first generation past the quota,
 uses the user's own key for the provider they selected.
@@ -226,15 +227,37 @@ class KeyRequired(Exception):
         super().__init__(f"{provider.label} key required ({reason})")
 
 
+async def platform_provider() -> Provider:
+    return PROVIDERS.get(await settings.get("platform_provider")) or PROVIDERS[DEFAULT_PROVIDER]
+
+
+async def platform_key(provider: Provider) -> tuple[str | None, str]:
+    """(key, source) for the built-in model: the key an admin saved for this
+    provider ("dashboard"), else OPENROUTER_API_KEY for OpenRouter ("env")."""
+    stored = (await settings.get("platform_keys")).get(provider.id)
+    if stored and (key := decrypt_key(stored["encrypted"])):
+        return key, "dashboard"
+    if provider.id == "openrouter" and config.OPENROUTER_API_KEY:
+        return config.OPENROUTER_API_KEY, "env"
+    return None, "none"
+
+
 async def platform_available() -> bool:
-    return bool(config.OPENROUTER_API_KEY) and bool(await settings.get("platform_enabled"))
+    if not await settings.get("platform_enabled"):
+        return False
+    key, _ = await platform_key(await platform_provider())
+    return key is not None
 
 
 async def platform_model() -> ResolvedModel | None:
-    if not await platform_available():
+    if not await settings.get("platform_enabled"):
         return None
-    provider = PROVIDERS["openrouter"]
-    client = AsyncOpenAI(api_key=config.OPENROUTER_API_KEY, base_url=config.OPENROUTER_BASE_URL, http_client=_http)
+    provider = await platform_provider()
+    key, _ = await platform_key(provider)
+    if key is None:
+        return None
+    base_url = config.OPENROUTER_BASE_URL if provider.id == "openrouter" else provider.base_url
+    client = AsyncOpenAI(api_key=key, base_url=base_url, http_client=_http)
     return ResolvedModel(client=client, provider=provider, model=await settings.get("platform_model"), source="platform")
 
 
@@ -262,7 +285,7 @@ async def resolve_for_turn(user_id: str, project_id: str, first_generation: bool
         return await user_model(user_id, "tweak")
     platform = await platform_model()
     if platform is None:
-        return await user_model(user_id, "platform_paused" if config.OPENROUTER_API_KEY else "platform_depleted")
+        return await user_model(user_id, "platform_depleted" if await settings.get("platform_enabled") else "platform_paused")
     user_settings = await db.get_settings(user_id)
     if not await settings.budget_left(user_id, user_settings):
         return await user_model(user_id, "budget")

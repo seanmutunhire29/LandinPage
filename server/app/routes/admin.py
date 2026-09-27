@@ -8,9 +8,19 @@ from typing import Literal
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 
-from app import config, db, settings
+from app import db, settings
 from app.agent.prompts import SYSTEM_PROMPT
 from app.auth import User, require_admin
+from app.providers import (
+    PROVIDERS,
+    InvalidKey,
+    encrypt_key,
+    last4,
+    list_models,
+    platform_key,
+    public_registry,
+    validate_key,
+)
 
 log = logging.getLogger(__name__)
 router = APIRouter(prefix="/admin", tags=["admin"], dependencies=[Depends(require_admin)])
@@ -163,6 +173,7 @@ async def stats(days: int = Query(30, ge=7, le=365)):
 # ---- platform settings ----
 
 class PlatformUpdate(BaseModel):
+    platform_provider: str | None = None
     platform_model: str | None = Field(default=None, min_length=1, max_length=200)
     free_generations: int | None = Field(default=None, ge=0, le=10_000)
     default_token_budget: int | None = Field(default=None, ge=0)
@@ -170,12 +181,27 @@ class PlatformUpdate(BaseModel):
     platform_enabled: bool | None = None
 
 
+def _platform_provider(provider_id: str):
+    provider = PROVIDERS.get(provider_id)
+    if provider is None:
+        raise HTTPException(404, f"Unknown provider: {provider_id}")
+    return provider
+
+
 async def _platform_payload() -> dict:
     current = await settings.get_all()
+    stored = current["platform_keys"]
+    keys = {}
+    for provider in PROVIDERS.values():
+        key, source = await platform_key(provider)
+        if key is not None:
+            keys[provider.id] = {"source": source, "last4": stored[provider.id]["last4"] if source == "dashboard" else last4(key)}
     return {
         "values": {k: current[k] for k in settings.PLATFORM_KEYS},
         "defaults": {k: settings.DEFAULTS[k] for k in settings.PLATFORM_KEYS},
-        "platform_key_configured": bool(config.OPENROUTER_API_KEY),
+        "providers": public_registry(),
+        # Which providers have a platform key; the keys themselves never leave the server.
+        "keys": keys,
     }
 
 
@@ -187,14 +213,67 @@ async def get_platform_settings():
 @router.put("/settings")
 async def update_platform_settings(body: PlatformUpdate, admin: User = Depends(require_admin)):
     current = await settings.get_all()
+    updates = body.model_dump(exclude_none=True)
+    if "platform_provider" in updates:
+        provider = _platform_provider(updates["platform_provider"])
+        # A model id rarely carries over between providers.
+        if updates["platform_provider"] != current["platform_provider"] and updates.get("platform_model", current["platform_model"]) == current["platform_model"]:
+            updates["platform_model"] = provider.default_model
     changes = {}
-    for key, value in body.model_dump(exclude_none=True).items():
+    for key, value in updates.items():
         if value != current[key]:
             changes[key] = {"from": current[key], "to": value}
             await settings.save(key, value, admin.id)
     if changes:
         await _audit(admin, "settings.update", None, **changes)
     return await _platform_payload()
+
+
+class KeyBody(BaseModel):
+    api_key: str = Field(min_length=8, max_length=500)
+
+
+@router.put("/platform-keys/{provider_id}")
+async def save_platform_key(provider_id: str, body: KeyBody, admin: User = Depends(require_admin)):
+    provider = _platform_provider(provider_id)
+    key = body.api_key.strip()
+    try:
+        await validate_key(provider, key)
+        encrypted = encrypt_key(key)
+    except InvalidKey as e:
+        raise HTTPException(400, str(e)) from None
+    except RuntimeError as e:
+        raise HTTPException(400, f"{e}. Set it in server/.env to save keys.") from None
+    keys = {**await settings.get("platform_keys"), provider.id: {"encrypted": encrypted, "last4": last4(key)}}
+    await settings.save("platform_keys", keys, admin.id)
+    await _audit(admin, "platform_key.update", None, provider=provider.id, last4=last4(key))
+    return await _platform_payload()
+
+
+@router.delete("/platform-keys/{provider_id}")
+async def delete_platform_key(provider_id: str, admin: User = Depends(require_admin)):
+    provider = _platform_provider(provider_id)
+    keys = dict(await settings.get("platform_keys"))
+    if keys.pop(provider.id, None) is not None:
+        await settings.save("platform_keys", keys, admin.id)
+        await _audit(admin, "platform_key.delete", None, provider=provider.id)
+    return await _platform_payload()
+
+
+@router.get("/platform-models/{provider_id}")
+async def platform_models(provider_id: str):
+    """Live model list using the platform key, shaped like /providers/{id}/models."""
+    provider = _platform_provider(provider_id)
+    key, _ = await platform_key(provider)
+    if key is None and provider.id != "openrouter":  # OpenRouter's list is public
+        return {"models": [], "live": False}
+    try:
+        return {"models": await list_models(provider, key), "live": True}
+    except InvalidKey as e:
+        raise HTTPException(400, str(e)) from None
+    except Exception as e:
+        log.warning("platform model list for %s failed: %s", provider.id, e)
+        return {"models": [], "live": False}
 
 
 # ---- system prompt ----

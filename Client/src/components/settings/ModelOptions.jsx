@@ -8,14 +8,14 @@ import { cn } from "@/lib/utils"
 const cache = new Map()
 const LOADING = { status: "loading", models: [] }
 
-function useLiveModels(providerId, keyStamp) {
+function useLiveModels(providerId, keyStamp, fetchModels) {
   const cacheKey = `${providerId}:${keyStamp ?? ""}`
   const [results, setResults] = useState({})
 
   useEffect(() => {
     if (cache.has(cacheKey)) return
     let cancelled = false
-    api.listModels(providerId).then(
+    fetchModels(providerId).then(
       (res) => {
         const next = { status: res.live ? "live" : "offline", models: res.models }
         cache.set(cacheKey, next)
@@ -26,7 +26,7 @@ function useLiveModels(providerId, keyStamp) {
     return () => {
       cancelled = true
     }
-  }, [providerId, cacheKey])
+  }, [providerId, cacheKey, fetchModels])
 
   return cache.get(cacheKey) ?? results[cacheKey] ?? LOADING
 }
@@ -53,9 +53,11 @@ function Option({ m, selected, onSelect }) {
 /**
  * Searchable model list for one provider: the server's suggestions first, then the
  * provider's live catalogue (when a key is saved), and a custom id from the search box.
+ * `fetchModels` loads the live list (default: with the user's own key); give it a
+ * distinct `keyStamp` so its results are cached separately.
  */
-export function ModelOptions({ provider, value, keyStamp, onSelect, className }) {
-  const live = useLiveModels(provider.id, keyStamp)
+export function ModelOptions({ provider, value, keyStamp, onSelect, className, fetchModels = api.listModels }) {
+  const live = useLiveModels(provider.id, keyStamp, fetchModels)
   const [query, setQuery] = useState("")
 
   const { suggested, rest } = useMemo(() => {
