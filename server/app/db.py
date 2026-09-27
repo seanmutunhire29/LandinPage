@@ -3,6 +3,7 @@ a user_id enforces ownership itself."""
 
 import re
 import secrets
+from datetime import UTC, datetime
 from typing import Any
 
 from postgrest.exceptions import APIError
@@ -187,10 +188,22 @@ async def profile_stats(user_id: str) -> dict:
 
 # ---- model settings and API keys ----
 
+SETTINGS_FIELDS = "provider, model, free_generations_used, free_generations_limit, token_budget, suspended_at, suspended_reason"
+_EMPTY_SETTINGS = {
+    "provider": None,
+    "model": None,
+    "free_generations_used": 0,
+    "free_generations_limit": None,
+    "token_budget": None,
+    "suspended_at": None,
+    "suspended_reason": "",
+}
+
+
 async def get_settings(user_id: str) -> dict:
     db = await client()
-    res = await db.table("user_settings").select("provider, model, free_generations_used").eq("user_id", user_id).limit(1).execute()
-    return res.data[0] if res.data else {"provider": None, "model": None, "free_generations_used": 0}
+    res = await db.table("user_settings").select(SETTINGS_FIELDS).eq("user_id", user_id).limit(1).execute()
+    return res.data[0] if res.data else dict(_EMPTY_SETTINGS)
 
 
 async def update_settings(user_id: str, provider: str, model: str) -> None:
@@ -219,3 +232,177 @@ async def upsert_key(user_id: str, provider: str, encrypted_key: str, last4: str
 async def delete_key(user_id: str, provider: str) -> None:
     db = await client()
     await db.table("user_api_keys").delete().eq("user_id", user_id).eq("provider", provider).execute()
+
+
+# ---- usage ----
+
+async def record_usage(
+    user_id: str,
+    project_id: str | None,
+    source: str,
+    provider: str,
+    model: str,
+    prompt_tokens: int,
+    completion_tokens: int,
+    cost: float | None,
+) -> None:
+    db = await client()
+    row = {
+        "user_id": user_id,
+        "project_id": project_id,
+        "source": source,
+        "provider": provider,
+        "model": model,
+        "prompt_tokens": prompt_tokens,
+        "completion_tokens": completion_tokens,
+        "cost": cost,
+    }
+    await db.table("usage_events").insert(row).execute()
+
+
+async def platform_tokens_used(user_id: str) -> int:
+    db = await client()
+    res = await db.rpc("platform_tokens_used", {"p_user": user_id}).execute()
+    return int(res.data or 0)
+
+
+async def get_suspension(user_id: str) -> dict | None:
+    """{suspended_at, suspended_reason} if the account is suspended, else None."""
+    db = await client()
+    res = await (
+        db.table("user_settings")
+        .select("suspended_at, suspended_reason")
+        .eq("user_id", user_id)
+        .not_.is_("suspended_at", "null")
+        .limit(1)
+        .execute()
+    )
+    return res.data[0] if res.data else None
+
+
+# ---- app settings ----
+
+async def get_app_settings() -> dict[str, Any]:
+    db = await client()
+    res = await db.table("app_settings").select("key, value").execute()
+    return {r["key"]: r["value"] for r in res.data}
+
+
+async def set_app_setting(key: str, value: Any, admin_id: str) -> None:
+    db = await client()
+    row = {"key": key, "value": value, "updated_by": admin_id, "updated_at": datetime.now(UTC).isoformat()}
+    await db.table("app_settings").upsert(row, on_conflict="key").execute()
+
+
+async def delete_app_setting(key: str) -> None:
+    db = await client()
+    await db.table("app_settings").delete().eq("key", key).execute()
+
+
+# ---- admin ----
+
+async def add_audit(admin_id: str, admin_email: str | None, action: str, target_user_id: str | None = None, details: dict | None = None) -> None:
+    db = await client()
+    row = {
+        "admin_id": admin_id,
+        "admin_email": admin_email or "",
+        "action": action,
+        "target_user_id": target_user_id,
+        "details": details or {},
+    }
+    await db.table("admin_audit_log").insert(row).execute()
+
+
+async def list_audit(limit: int, offset: int) -> tuple[list[dict], int]:
+    db = await client()
+    res = await (
+        db.table("admin_audit_log")
+        .select("*", count="exact")
+        .order("created_at", desc=True)
+        .range(offset, offset + limit - 1)
+        .execute()
+    )
+    return res.data, res.count or 0
+
+
+async def admin_list_users(search: str | None, limit: int, offset: int) -> tuple[list[dict], int]:
+    db = await client()
+    res = await db.rpc("admin_list_users", {"p_search": search or "", "p_limit": limit, "p_offset": offset}).execute()
+    rows = res.data or []
+    total = rows[0]["total_count"] if rows else 0
+    for r in rows:
+        r.pop("total_count", None)
+    return rows, total
+
+
+async def admin_stats(days: int) -> dict:
+    db = await client()
+    res = await db.rpc("admin_stats", {"p_days": days}).execute()
+    return res.data
+
+
+async def admin_get_auth_user(user_id: str) -> dict | None:
+    db = await client()
+    try:
+        res = await db.auth.admin.get_user_by_id(user_id)
+    except Exception:
+        return None
+    u = res.user
+    if u is None:
+        return None
+    return {
+        "id": u.id,
+        "email": u.email,
+        "created_at": u.created_at,
+        "last_sign_in_at": u.last_sign_in_at,
+        "provider": (u.app_metadata or {}).get("provider"),
+        "is_admin": (u.app_metadata or {}).get("role") == "admin",
+        "banned_until": getattr(u, "banned_until", None),
+        "app_metadata": u.app_metadata or {},
+    }
+
+
+async def admin_list_projects(user_id: str) -> list[dict]:
+    db = await client()
+    res = await (
+        db.table("projects")
+        .select("id, name, created_at, updated_at, platform_generation")
+        .eq("user_id", user_id)
+        .order("updated_at", desc=True)
+        .execute()
+    )
+    return res.data
+
+
+async def admin_get_project(project_id: str) -> dict | None:
+    db = await client()
+    res = await db.table("projects").select("*").eq("id", project_id).limit(1).execute()
+    return res.data[0] if res.data else None
+
+
+async def admin_usage_summary(user_id: str) -> dict:
+    db = await client()
+    res = await db.table("usage_events").select("source, prompt_tokens, completion_tokens, cost").eq("user_id", user_id).execute()
+    out = {"platform_tokens": 0, "user_tokens": 0, "platform_cost": 0.0, "calls": len(res.data)}
+    for r in res.data:
+        tokens = (r["prompt_tokens"] or 0) + (r["completion_tokens"] or 0)
+        out[f"{r['source']}_tokens"] += tokens
+        if r["source"] == "platform" and r.get("cost") is not None:
+            out["platform_cost"] += float(r["cost"])
+    return out
+
+
+async def update_user_settings(user_id: str, fields: dict) -> None:
+    """Upsert arbitrary user_settings columns (admin limits, suspension)."""
+    db = await client()
+    await db.table("user_settings").upsert({"user_id": user_id, **fields}, on_conflict="user_id").execute()
+
+
+async def admin_update_auth_user(user_id: str, attributes: dict) -> None:
+    db = await client()
+    await db.auth.admin.update_user_by_id(user_id, attributes)
+
+
+async def admin_delete_user(user_id: str) -> None:
+    db = await client()
+    await db.auth.admin.delete_user(user_id)

@@ -1,11 +1,12 @@
 import { useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
-import { Cpu, LogOut, Settings, UserRound } from "lucide-react"
+import { Cpu, LogOut, Settings, ShieldCheck, UserRound } from "lucide-react"
 import { useAuthStore } from "@/store/useAuthStore"
 import { useAccountStore, useDisplayUser } from "@/store/useAccountStore"
 import { UserAvatar } from "@/components/account/UserAvatar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { shortModel } from "@/lib/providers"
+import { useIsAdmin } from "./RequireAdmin"
 
 function Item({ to, Icon, children, caption, onSelect }) {
   return (
@@ -27,6 +28,7 @@ export function UserMenu() {
   const signOut = useAuthStore((s) => s.signOut)
   const navigate = useNavigate()
   const [open, setOpen] = useState(false)
+  const isAdmin = useIsAdmin()
   if (!me) return null
   const close = () => setOpen(false)
 
@@ -53,6 +55,11 @@ export function UserMenu() {
         <Item to="/settings/profile" Icon={Settings} onSelect={close}>
           Settings
         </Item>
+        {isAdmin && (
+          <Item to="/admin/overview" Icon={ShieldCheck} onSelect={close}>
+            Admin dashboard
+          </Item>
+        )}
         <div className="my-1 h-px bg-border" />
         <button
           onClick={async () => {

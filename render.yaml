@@ -23,6 +23,8 @@ services:
         value: "8000"
       - key: FREE_GENERATIONS
         value: "3"
+      - key: DEFAULT_TOKEN_BUDGET
+        value: "500000"
       - key: KEY_ENCRYPTION_SECRET
         sync: false
       - key: SUPABASE_URL

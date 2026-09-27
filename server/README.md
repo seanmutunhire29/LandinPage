@@ -36,6 +36,9 @@ cd ../Client && npm install && cp .env.example .env && npm run dev
 | `AGENT_MODEL` | `anthropic/claude-haiku-4.5` | Model used for free generations. |
 | `AGENT_MAX_TOKENS` | `8000` | Output cap per model call. Lower it if OpenRouter returns 402 "can only afford N tokens". |
 | `FREE_GENERATIONS` | `3` | Free first generations per account. |
+| `DEFAULT_TOKEN_BUDGET` | `500000` | Platform-key tokens (prompt + completion) each account may use in total. `0` = unlimited. |
+
+`AGENT_MODEL`, `AGENT_MAX_TOKENS`, `FREE_GENERATIONS` and `DEFAULT_TOKEN_BUDGET` are defaults: admins can override them at runtime from the admin dashboard (stored in the `app_settings` table).
 | `KEY_ENCRYPTION_SECRET` | | Fernet key used to encrypt user API keys. Required to save keys. |
 | `SUPABASE_URL` | | `https://<project>.supabase.co` |
 | `SUPABASE_SERVICE_ROLE_KEY` | | Service role key. Server-side only. |
@@ -54,12 +57,30 @@ uv run python -c "from cryptography.fernet import Fernet; print(Fernet.generate_
 ## Supabase
 
 1. Create a project at [supabase.com](https://supabase.com).
-2. In the **SQL editor**, run `supabase/migrations/0001_init.sql`, then `0002_portal.sql`.
+2. In the **SQL editor**, run `supabase/migrations/0001_init.sql`, then `0002_portal.sql`, then `0003_admin.sql`.
 3. From **Project Settings → API**, copy the URL and `service_role` key into `server/.env`. Copy the URL and `anon` key into `Client/.env` as `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`.
 4. In **Project Settings → API → JWT**: if the project still uses the legacy JWT secret, copy it into `SUPABASE_JWT_SECRET`. Projects on the newer asymmetric signing keys are verified through JWKS with no extra config.
 5. In **Authentication → URL Configuration**, set the Site URL to `http://localhost:5173` and add `http://localhost:5173/auth/callback` to the Redirect URLs. Add the production equivalents when you deploy.
 6. In **Authentication → Providers → Google**, enable Google and paste an OAuth client ID and secret. Create them in Google Cloud Console under **Credentials → OAuth client ID** with type "Web application". The authorized redirect URI is the callback URL Supabase shows on that page.
 7. Optional: in **Authentication → Providers → Email**, turn off "Confirm email" for a faster local dev loop.
+
+### Admin accounts
+
+Admins are users with `"role": "admin"` in their Supabase `app_metadata` (only the service role can set it, so users can't grant it to themselves). Make your own account an admin once in the SQL editor:
+
+```sql
+update auth.users set raw_app_meta_data = raw_app_meta_data || '{"role":"admin"}'
+  where email = 'you@example.com';
+```
+
+Sign out and back in so your token carries the role, then open **Admin dashboard** from the account menu (`/admin`). From there you can promote other admins, and:
+
+- see every account with its usage, set per-user free-generation and token-budget overrides, suspend, or delete accounts;
+- browse any project's chat, files and design spec (read-only);
+- change the built-in model, output cap and default limits, or pause the built-in model;
+- edit the agent's system prompt (previous versions are kept in the audit log);
+- post a site-wide announcement banner;
+- view signups, token usage and platform spend, and the audit log of every admin change.
 
 ### Data model
 
@@ -69,19 +90,23 @@ uv run python -c "from cryptography.fernet import Fernet; print(Fernet.generate_
 | `project_files` | One row per file (`project_id`, `file_path`, `content`) |
 | `chat_messages` | Ordered conversation: `user` / `assistant` / `tool` roles, `tool_calls`, `tool_call_id` |
 | `profiles` | Username, display name, bio, avatar, website, location |
-| `user_settings` | Selected provider and model, `free_generations_used` |
+| `user_settings` | Selected provider and model, `free_generations_used`, admin overrides (`free_generations_limit`, `token_budget`), suspension |
 | `user_api_keys` | Fernet-encrypted key and its last 4 characters, per provider |
+| `usage_events` | One row per model call: source (`platform` / `user`), model, prompt/completion tokens, cost |
+| `app_settings` | Runtime settings edited by admins (model, limits, system prompt, announcement) |
+| `admin_audit_log` | Every change made from the admin dashboard |
 
 The backend uses the service role and enforces ownership itself. RLS policies protect direct access with the anon key. `user_api_keys` has no policy, so only the service role can read it. The `claim_free_generation()` function reserves a free generation atomically, and retrying a project that already holds a reservation doesn't count twice.
 
 ## API
 
-All endpoints except `/health` and `/providers` require `Authorization: Bearer <supabase access token>`.
+All endpoints except `/health`, `/providers` and `/announcement` require `Authorization: Bearer <supabase access token>`.
 
 | Method | Path | Description |
 | --- | --- | --- |
 | `GET` | `/health` | Liveness check |
-| `GET` | `/me` | Current user id and email |
+| `GET` | `/me` | Current user id, email and `is_admin` |
+| `GET` | `/announcement` | Site-wide banner (public) |
 | `GET` | `/projects` | List the user's projects |
 | `POST` | `/projects` | Create a project from `{design_spec, first_message, name?}`. Seeds the template and stores the first message as a pending turn. |
 | `GET` | `/projects/{id}` | Project with its files and messages |
@@ -90,10 +115,13 @@ All endpoints except `/health` and `/providers` require `Authorization: Bearer <
 | `PUT` / `DELETE` | `/me/keys/{provider}` | Save (validated against the provider first) or remove an API key |
 | `GET` | `/providers` | Provider registry: labels, key URLs, suggested models |
 | `GET` | `/providers/{provider}/models` | Live model list using the user's key |
+| various | `/admin/*` | Admin dashboard API (users, projects, stats, settings, system prompt, announcement, audit). Admins only; see [`app/routes/admin.py`](app/routes/admin.py). |
+
+Suspended accounts get `403` from every endpoint.
 
 ### WebSocket: `/ws/projects/{id}`
 
-The first message must be `{"type": "auth", "token": "..."}` and must arrive within 15 seconds. If it doesn't, the socket closes with code `4401`. An unknown project closes with `4404`.
+The first message must be `{"type": "auth", "token": "..."}` and must arrive within 15 seconds. If it doesn't, the socket closes with code `4401`. A suspended account closes with `4403`, and an unknown project with `4404`.
 
 | Direction | Events |
 | --- | --- |

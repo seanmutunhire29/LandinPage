@@ -18,7 +18,7 @@ from pathlib import PurePosixPath
 
 from openai import APIConnectionError, APIStatusError
 
-from app import config, db
+from app import db, settings
 from app.agent.bridge import CommandBridge
 from app.agent.prompts import build_system_prompt
 from app.integrations.mcp_client import mcp_manager
@@ -36,6 +36,7 @@ Emit = Callable[[dict], Awaitable[None]]
 
 @dataclass
 class AgentContext:
+    user_id: str
     project_id: str
     design_spec: dict
     emit: Emit
@@ -273,19 +274,35 @@ async def tool_call(ctx: AgentContext, tool_calls: list[dict]) -> list[dict]:
 # Model call
 # ---------------------------------------------------------------------------
 
-async def llm_call(llm: ResolvedModel, msg: list[dict], tools: list[dict], on_token: Emit) -> dict:
+@dataclass
+class Usage:
+    prompt_tokens: int = 0
+    completion_tokens: int = 0
+    cost: float | None = None  # OpenRouter reports the call's cost in credits (USD)
+
+
+async def llm_call(llm: ResolvedModel, msg: list[dict], tools: list[dict], on_token: Emit) -> tuple[dict, Usage]:
     """Streaming chat completion. Emits text tokens as they arrive and returns
-    the assembled assistant message (content + all tool calls)."""
+    the assembled assistant message (content + all tool calls) and token usage."""
+    extra = {"extra_body": {"usage": {"include": True}}} if llm.provider.id == "openrouter" else {}
     stream = await llm.client.chat.completions.create(
         model=llm.model,
         messages=msg,
         tools=tools,
         stream=True,
-        **{llm.max_tokens_param: config.AGENT_MAX_TOKENS},
+        stream_options={"include_usage": True},
+        **{llm.max_tokens_param: await settings.get("max_tokens")},
+        **extra,
     )
     content: list[str] = []
     calls: dict[int, dict] = {}
+    usage = Usage()
     async for chunk in stream:
+        if chunk.usage:
+            usage.prompt_tokens = chunk.usage.prompt_tokens or 0
+            usage.completion_tokens = chunk.usage.completion_tokens or 0
+            cost = (chunk.usage.model_extra or {}).get("cost")
+            usage.cost = float(cost) if cost is not None else None
         if not chunk.choices:
             continue
         delta = chunk.choices[0].delta
@@ -314,7 +331,18 @@ async def llm_call(llm: ResolvedModel, msg: list[dict], tools: list[dict], on_to
         message["tool_calls"] = tool_calls
     if "content" not in message and "tool_calls" not in message:
         message["content"] = ""
-    return message
+    return message, usage
+
+
+async def _record_usage(ctx: AgentContext, llm: ResolvedModel, usage: Usage) -> None:
+    try:
+        await db.record_usage(
+            ctx.user_id, ctx.project_id, llm.source, llm.provider.id, llm.model,
+            usage.prompt_tokens, usage.completion_tokens, usage.cost,
+        )
+    except Exception:
+        # Usage tracking must never break a turn.
+        log.exception("[%s] could not record usage", ctx.project_id[:8])
 
 
 def describe_error(e: Exception, llm: ResolvedModel | None = None) -> dict:
@@ -368,13 +396,26 @@ async def run_turn(ctx: AgentContext, history: list[dict], llm: ResolvedModel) -
     assistant and tool messages are persisted as they happen. Returns the
     final assistant text."""
     files = await db.list_files(ctx.project_id)
-    messages = [{"role": "system", "content": build_system_prompt(ctx.design_spec, [f["file_path"] for f in files])}]
+    base_prompt = await settings.get("system_prompt")
+    messages = [{"role": "system", "content": build_system_prompt(base_prompt, ctx.design_spec, [f["file_path"] for f in files])}]
     messages += history
     tools = available_tools + mcp_manager.tool_schemas()
+    user_settings = await db.get_settings(ctx.user_id) if llm.source == "platform" else None
 
     for iteration in range(1, MAX_ITERATIONS + 1):
+        if user_settings is not None and iteration > 1 and not await settings.budget_left(ctx.user_id, user_settings):
+            note = (
+                "You've reached this account's usage limit for the built-in model, so I stopped here. "
+                "Add your own API key in Settings and send another message to continue."
+            )
+            log.info("[%s] platform token budget reached", ctx.project_id[:8])
+            row = await db.add_message(ctx.project_id, "assistant", note)
+            await ctx.emit({"type": "assistant_message", "message": row})
+            return note
+
         log.info("[%s] iteration %d (%s %s, %s key)", ctx.project_id[:8], iteration, llm.provider.id, llm.model, llm.source)
-        message = await llm_call(llm, messages, tools, ctx.emit)
+        message, usage = await llm_call(llm, messages, tools, ctx.emit)
+        await _record_usage(ctx, llm, usage)
         messages.append(message)
 
         row = await db.add_message(ctx.project_id, "assistant", message.get("content", ""), tool_calls=message.get("tool_calls"))

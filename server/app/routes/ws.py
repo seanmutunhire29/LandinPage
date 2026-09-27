@@ -25,7 +25,7 @@ import logging
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from openai import APIStatusError
 
-from app import config, db
+from app import db, settings
 from app.agent.bridge import CommandBridge
 from app.agent.loop import AgentContext, ToolError, describe_error, history_from_db, normalize_path, run_turn
 from app.auth import AuthError, verify_token
@@ -45,15 +45,19 @@ def _pending(rows: list[dict]) -> bool:
     return False
 
 
-def _key_required_message(e: KeyRequired) -> str:
+async def _key_required_message(e: KeyRequired, user_id: str) -> str:
     label = e.provider.label
     if e.reason == "tweak":
         return f"Your site's first version is done. Add your own {label} API key to keep editing it."
     if e.reason == "quota":
-        n = config.FREE_GENERATIONS
+        n = await settings.effective_free_limit(await db.get_settings(user_id))
         return f"You've used your {n} free generation{'s' if n != 1 else ''}. Add your own {label} API key to generate this site."
+    if e.reason == "budget":
+        return f"You've reached this account's usage limit for the built-in model. Add your own {label} API key to keep going."
     if e.reason == "platform_depleted":
         return f"The built-in model is out of credit right now. Add your own {label} API key to keep going."
+    if e.reason == "platform_paused":
+        return f"The built-in model is paused right now. Add your own {label} API key to keep going."
     return f"Your saved {label} key can't be used any more. Enter it again in Settings."
 
 
@@ -83,13 +87,18 @@ async def project_socket(ws: WebSocket, project_id: str):
         await ws.close(code=4401, reason=f"unauthorized: {e}"[:120])
         return
 
+    if not user.is_admin and (suspension := await db.get_suspension(user.id)):
+        reason = suspension.get("suspended_reason")
+        await ws.close(code=4403, reason=f"Account suspended{f': {reason}' if reason else ''}"[:120])
+        return
+
     project = await db.get_project(project_id, user.id)
     if project is None:
         await ws.close(code=4404, reason="project not found")
         return
 
     bridge = CommandBridge(emit)
-    ctx = AgentContext(project_id=project_id, design_spec=project["design_spec"], emit=emit, bridge=bridge)
+    ctx = AgentContext(user_id=user.id, project_id=project_id, design_spec=project["design_spec"], emit=emit, bridge=bridge)
     turn: asyncio.Task | None = None
 
     async def run(new_message: str | None) -> None:
@@ -119,7 +128,7 @@ async def project_socket(ws: WebSocket, project_id: str):
             await emit({"type": "turn_done"})
         except KeyRequired as e:
             log.info("[%s] turn needs the user's %s key (%s)", project_id[:8], e.provider.id, e.reason)
-            await emit({"type": "error", "code": "key_required", "reason": e.reason, "provider": e.provider.id, "message": _key_required_message(e)})
+            await emit({"type": "error", "code": "key_required", "reason": e.reason, "provider": e.provider.id, "message": await _key_required_message(e, user.id)})
             await emit({"type": "turn_done"})
         except Exception as e:
             log.exception("[%s] turn failed", project_id[:8])

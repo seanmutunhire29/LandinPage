@@ -6,10 +6,10 @@ from contextlib import asynccontextmanager
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app import config
+from app import config, settings
 from app.auth import User, current_user
 from app.integrations.mcp_client import mcp_manager
-from app.routes import account, projects, ws
+from app.routes import account, admin, projects, ws
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 
@@ -34,6 +34,7 @@ app.add_middleware(
 app.include_router(projects.router)
 app.include_router(account.router)
 app.include_router(ws.router)
+app.include_router(admin.router)
 
 
 @app.get("/health")
@@ -43,4 +44,11 @@ async def health():
 
 @app.get("/me")
 async def me(user: User = Depends(current_user)):
-    return {"id": user.id, "email": user.email}
+    return {"id": user.id, "email": user.email, "is_admin": user.is_admin}
+
+
+@app.get("/announcement")
+async def announcement():
+    """Site-wide banner set from the admin dashboard. Public."""
+    value = await settings.get("announcement")
+    return value if value.get("enabled") and value.get("message") else {"enabled": False, "message": "", "level": "info"}

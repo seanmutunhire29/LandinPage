@@ -16,6 +16,10 @@ AGENT_MAX_TOKENS = int(os.getenv("AGENT_MAX_TOKENS", "8000"))
 # First generations per account that run on the platform key above. Every later turn
 # (and any first generation past this quota) uses the user's own provider key.
 FREE_GENERATIONS = int(os.getenv("FREE_GENERATIONS", "3"))
+# Platform-key tokens (prompt + completion) each account may use in total. 0 = unlimited.
+DEFAULT_TOKEN_BUDGET = int(os.getenv("DEFAULT_TOKEN_BUDGET", "500000"))
+# Admins can override the model, quotas and system prompt at runtime from the
+# dashboard (app_settings table); these env values are the defaults.
 # Fernet key used to encrypt user API keys at rest.
 KEY_ENCRYPTION_SECRET = os.getenv("KEY_ENCRYPTION_SECRET") or None
 

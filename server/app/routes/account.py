@@ -8,9 +8,9 @@ import httpx
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field, field_validator
 
-from app import config, db
+from app import config, db, settings as app_settings
 from app.auth import User, current_user
-from app.providers import PROVIDERS, InvalidKey, decrypt_key, encrypt_key, last4, list_models, public_registry, selected, validate_key
+from app.providers import PROVIDERS, InvalidKey, platform_available, decrypt_key, encrypt_key, last4, list_models, public_registry, selected, validate_key
 
 log = logging.getLogger(__name__)
 router = APIRouter(tags=["account"])
@@ -92,14 +92,15 @@ class SettingsUpdate(BaseModel):
 async def _settings_payload(user_id: str) -> dict:
     settings = await db.get_settings(user_id)
     provider, model = await selected(user_id)
+    limit = await app_settings.effective_free_limit(settings) if await platform_available() else 0
     return {
         "provider": provider.id,
         "model": model,
         "free_generations": {
-            "used": min(settings.get("free_generations_used", 0), config.FREE_GENERATIONS),
-            "limit": config.FREE_GENERATIONS if config.OPENROUTER_API_KEY else 0,
+            "used": min(settings.get("free_generations_used", 0), limit),
+            "limit": limit,
         },
-        "platform_model": config.AGENT_MODEL,
+        "platform_model": await app_settings.get("platform_model"),
         "keys": await db.list_keys(user_id),
     }
 

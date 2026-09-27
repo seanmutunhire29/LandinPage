@@ -4,9 +4,9 @@ Every provider here speaks the OpenAI Chat Completions API (Anthropic through it
 OpenAI SDK compatibility endpoint), so the agent loop has one code path.
 
 Key policy: a project's first generation runs on the platform OpenRouter key while
-the account has free generations left (config.FREE_GENERATIONS). Every later turn,
-and any first generation past the quota, uses the user's own key for the provider
-they selected.
+the account has free generations and platform token budget left (admin settings,
+see app.settings). Every later turn, and any first generation past the quota,
+uses the user's own key for the provider they selected.
 """
 
 import logging
@@ -16,7 +16,7 @@ import httpx
 from cryptography.fernet import Fernet, InvalidToken
 from openai import AsyncOpenAI, DefaultAsyncHttpxClient
 
-from app import config, db
+from app import config, db, settings
 
 log = logging.getLogger(__name__)
 
@@ -214,7 +214,9 @@ class KeyRequired(Exception):
 
     reason: "tweak"              the project's first generation is done
             "quota"              the account's free generations are used up
+            "budget"             the account's platform token budget is used up
             "platform_depleted"  the platform key ran out of credit
+            "platform_paused"    an admin turned the platform key off
             "invalid_key"        the stored key can't be used any more
     """
 
@@ -224,12 +226,16 @@ class KeyRequired(Exception):
         super().__init__(f"{provider.label} key required ({reason})")
 
 
-def platform_model() -> ResolvedModel | None:
-    if not config.OPENROUTER_API_KEY:
+async def platform_available() -> bool:
+    return bool(config.OPENROUTER_API_KEY) and bool(await settings.get("platform_enabled"))
+
+
+async def platform_model() -> ResolvedModel | None:
+    if not await platform_available():
         return None
     provider = PROVIDERS["openrouter"]
     client = AsyncOpenAI(api_key=config.OPENROUTER_API_KEY, base_url=config.OPENROUTER_BASE_URL, http_client=_http)
-    return ResolvedModel(client=client, provider=provider, model=config.AGENT_MODEL, source="platform")
+    return ResolvedModel(client=client, provider=provider, model=await settings.get("platform_model"), source="platform")
 
 
 async def selected(user_id: str) -> tuple[Provider, str]:
@@ -252,12 +258,18 @@ async def user_model(user_id: str, reason: str) -> ResolvedModel:
 
 
 async def resolve_for_turn(user_id: str, project_id: str, first_generation: bool) -> ResolvedModel:
-    if first_generation:
-        platform = platform_model()
-        if platform and await db.claim_free_generation(user_id, project_id, config.FREE_GENERATIONS):
-            return platform
-        return await user_model(user_id, "quota" if platform else "platform_depleted")
-    return await user_model(user_id, "tweak")
+    if not first_generation:
+        return await user_model(user_id, "tweak")
+    platform = await platform_model()
+    if platform is None:
+        return await user_model(user_id, "platform_paused" if config.OPENROUTER_API_KEY else "platform_depleted")
+    user_settings = await db.get_settings(user_id)
+    if not await settings.budget_left(user_id, user_settings):
+        return await user_model(user_id, "budget")
+    limit = await settings.effective_free_limit(user_settings)
+    if await db.claim_free_generation(user_id, project_id, limit):
+        return platform
+    return await user_model(user_id, "quota")
 
 
 def is_first_generation(project: dict, rows: list[dict]) -> bool:
@@ -271,9 +283,11 @@ def is_first_generation(project: dict, rows: list[dict]) -> bool:
 async def free_generation_available(user_id: str, project: dict, rows: list[dict]) -> bool:
     """Whether the project's next turn can run on the platform key. The server
     re-checks when the turn actually starts."""
-    if not config.OPENROUTER_API_KEY or not is_first_generation(project, rows):
+    if not is_first_generation(project, rows) or not await platform_available():
+        return False
+    user_settings = await db.get_settings(user_id)
+    if not await settings.budget_left(user_id, user_settings):
         return False
     if project.get("platform_generation") == "reserved":
         return True
-    settings = await db.get_settings(user_id)
-    return settings.get("free_generations_used", 0) < config.FREE_GENERATIONS
+    return user_settings.get("free_generations_used", 0) < await settings.effective_free_limit(user_settings)

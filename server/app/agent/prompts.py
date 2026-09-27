@@ -44,10 +44,11 @@ Do not paste code into the reply; the user sees the files in the editor.
 """
 
 
-def build_system_prompt(design_spec: dict, file_paths: list[str]) -> str:
+def build_system_prompt(base: str | None, design_spec: dict, file_paths: list[str]) -> str:
+    """`base` is the admin-edited prompt (app settings); None uses SYSTEM_PROMPT."""
     files = "\n".join(f"- {p}" for p in file_paths) or "(no files yet)"
     return (
-        f"{SYSTEM_PROMPT}\n"
+        f"{(base or SYSTEM_PROMPT).rstrip()}\n\n"
         f"# Current files\n{files}\n\n"
         f"# Design spec\n```json\n{json.dumps(design_spec, indent=2)}\n```\n"
     )

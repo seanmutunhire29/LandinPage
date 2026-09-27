@@ -12,17 +12,31 @@ import Motion from "@/pages/onboarding/Motion"
 import Review from "@/pages/onboarding/Review"
 import { ScrollToTop } from "@/components/ScrollToTop"
 import { RequireAuth } from "@/components/auth/RequireAuth"
+import { RequireAdmin } from "@/components/auth/RequireAdmin"
+import { AnnouncementBanner } from "@/components/AnnouncementBanner"
 import AuthCallback from "@/pages/AuthCallback"
 import Profile from "@/pages/Profile"
 import Settings from "@/pages/Settings"
 
 // Monaco + WebContainer code only loads when a project is opened.
 const Workspace = lazy(() => import("@/pages/Workspace"))
+const Admin = lazy(() => import("@/pages/Admin"))
+
+function AdminRoute({ view }) {
+  return (
+    <RequireAdmin>
+      <Suspense fallback={<div className="h-svh bg-brand-mist" />}>
+        <Admin view={view} />
+      </Suspense>
+    </RequireAdmin>
+  )
+}
 
 export default function App() {
   return (
     <BrowserRouter>
       <ScrollToTop />
+      <AnnouncementBanner />
       <Routes>
         <Route path="/" element={<Marketing />} />
         <Route path="/onboarding" element={<WizardLayout />}>
@@ -67,6 +81,10 @@ export default function App() {
             </RequireAuth>
           }
         />
+        <Route path="/admin" element={<Navigate to="/admin/overview" replace />} />
+        <Route path="/admin/users/:userId" element={<AdminRoute view="user" />} />
+        <Route path="/admin/projects/:projectId" element={<AdminRoute view="project" />} />
+        <Route path="/admin/:section" element={<AdminRoute />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>

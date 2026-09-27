@@ -12,7 +12,7 @@ import jwt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
-from app import config
+from app import config, db
 
 _jwks = jwt.PyJWKClient(f"{config.SUPABASE_URL}/auth/v1/.well-known/jwks.json", cache_keys=True) if config.SUPABASE_URL else None
 _bearer = HTTPBearer(auto_error=False)
@@ -23,6 +23,8 @@ class User:
     id: str
     email: str | None
     metadata: dict = field(default_factory=dict)  # Supabase user_metadata (full_name, avatar_url, ...)
+    # app_metadata.role == "admin". app_metadata is only writable with the service role.
+    is_admin: bool = False
 
 
 class AuthError(Exception):
@@ -50,13 +52,29 @@ async def verify_token(token: str) -> User:
     claims = await asyncio.to_thread(_decode, token)
     if not claims.get("sub"):
         raise AuthError("token has no subject")
-    return User(id=claims["sub"], email=claims.get("email"), metadata=claims.get("user_metadata") or {})
+    app_meta = claims.get("app_metadata") or {}
+    return User(
+        id=claims["sub"],
+        email=claims.get("email"),
+        metadata=claims.get("user_metadata") or {},
+        is_admin=app_meta.get("role") == "admin",
+    )
 
 
 async def current_user(creds: HTTPAuthorizationCredentials | None = Depends(_bearer)) -> User:
     if creds is None:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Missing bearer token")
     try:
-        return await verify_token(creds.credentials)
+        user = await verify_token(creds.credentials)
     except AuthError as e:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, f"Invalid token: {e}") from e
+    if not user.is_admin and (suspension := await db.get_suspension(user.id)):
+        reason = suspension.get("suspended_reason")
+        raise HTTPException(status.HTTP_403_FORBIDDEN, f"Account suspended{f': {reason}' if reason else ''}")
+    return user
+
+
+async def require_admin(user: User = Depends(current_user)) -> User:
+    if not user.is_admin:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "Admins only")
+    return user

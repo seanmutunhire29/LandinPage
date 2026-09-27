@@ -39,8 +39,8 @@ export function connectAgentSocket(projectId, { onEvent, onStatus }) {
       clearInterval(pingTimer)
       if (closed) return
       onStatus("closed", e.reason)
-      // 4401 unauthorized / 4404 not found: retrying won't help.
-      if (e.code === 4401 || e.code === 4404) return onEvent({ type: "error", message: e.reason || "Connection refused" })
+      // 4401 unauthorized / 4403 suspended / 4404 not found: retrying won't help.
+      if (e.code === 4401 || e.code === 4403 || e.code === 4404) return onEvent({ type: "error", message: e.reason || "Connection refused" })
       const delay = Math.min(1000 * 2 ** attempts++, 15_000)
       setTimeout(() => !closed && open(), delay)
     }

@@ -52,6 +52,7 @@ Supabase is the source of truth. You can reopen a project on any machine and it 
 # 1. Database: in the Supabase SQL editor, run these in order
 #    server/supabase/migrations/0001_init.sql
 #    server/supabase/migrations/0002_portal.sql
+#    server/supabase/migrations/0003_admin.sql
 
 # 2. API (terminal 1)
 cd server
@@ -73,6 +74,7 @@ Open http://localhost:5173. The full Supabase setup (auth redirect URLs, Google 
 ## Models and API keys
 
 - **Free first generations.** Each account gets `FREE_GENERATIONS` first builds (default 3). They run on the platform's OpenRouter key and model (`AGENT_MODEL`, default `anthropic/claude-haiku-4.5`).
+- **Usage limits.** Each account also has a platform token budget (`DEFAULT_TOKEN_BUDGET`). Admins can change the model, the defaults and per-user limits in the admin dashboard; see [Admin accounts](server/README.md#admin-accounts).
 - **Bring your own key.** After that, including every edit after a project's first build, the agent uses the user's own key. Users add keys under **Settings → Models & API keys** for Claude, OpenAI, DeepSeek, Kimi or OpenRouter. Keys are encrypted at rest and never sent back to the browser.
 
 ## Deployment
