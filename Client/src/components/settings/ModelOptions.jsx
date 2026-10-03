@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from "react"
-import { Check, Loader2, Plus, Search } from "lucide-react"
+import { ChevronsUpDown, Loader2, Plus } from "lucide-react"
 import { api } from "@/lib/api"
-import { BrandInput } from "@/components/brand/field"
+import { Button } from "@/components/ui/button"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
 import { cn } from "@/lib/utils"
 
 // Live model lists per provider, keyed by provider + saved key so a new key refetches.
@@ -33,32 +35,26 @@ function useLiveModels(providerId, keyStamp, fetchModels) {
 
 function Option({ m, selected, onSelect }) {
   return (
-    <li>
-      <button
-        type="button"
-        onClick={() => onSelect(m.id)}
-        className={cn(
-          "flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm transition-colors hover:bg-muted",
-          selected ? "font-semibold text-brand-dark" : "text-brand-navy"
-        )}
-      >
-        <span className="min-w-0 flex-1 truncate">{m.id}</span>
-        {m.name !== m.id && <span className="max-w-[45%] truncate text-xs text-brand-subtle">{m.name}</span>}
-        {selected && <Check className="size-3.5 shrink-0" />}
-      </button>
-    </li>
+    <CommandItem value={m.id} data-checked={selected} onSelect={() => onSelect(m.id)}>
+      <span className={cn("min-w-0 flex-1 truncate", selected && "font-medium")}>{m.id}</span>
+      {m.name !== m.id && <span className="max-w-[45%] truncate text-xs text-muted-foreground">{m.name}</span>}
+    </CommandItem>
   )
 }
 
+const CUSTOM_PREFIX = "custom:"
+
 /**
- * Searchable model list for one provider: the server's suggestions first, then the
- * provider's live catalogue (when a key is saved), and a custom id from the search box.
+ * Searchable model list for one provider (a shadcn Command): the server's suggestions
+ * first, then the provider's live catalogue (when a key is saved), and a custom id from
+ * the search box. Enter picks the typed id unless you arrow to another option.
  * `fetchModels` loads the live list (default: with the user's own key); give it a
  * distinct `keyStamp` so its results are cached separately.
  */
 export function ModelOptions({ provider, value, keyStamp, onSelect, className, fetchModels = api.listModels }) {
   const live = useLiveModels(provider.id, keyStamp, fetchModels)
   const [query, setQuery] = useState("")
+  const [highlight, setHighlight] = useState(value ?? "")
 
   const { suggested, rest } = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -73,63 +69,74 @@ export function ModelOptions({ provider, value, keyStamp, onSelect, className, f
   const custom = query.trim()
   const exact = custom && [...suggested, ...rest].some((m) => m.id === custom)
 
+  const search = (next) => {
+    setQuery(next)
+    // Typing points Enter at the typed id (an exact match, or the "Use ..." option).
+    const id = next.trim()
+    const isExact = id && (provider.models.includes(id) || live.models.some((m) => m.id === id))
+    setHighlight(id ? (isExact ? id : CUSTOM_PREFIX + id) : "")
+  }
+
   return (
-    <div className={cn("flex min-h-0 flex-col", className)}>
-      <div className="relative mb-1.5">
-        <Search className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-brand-subtle" />
-        <BrandInput
-          size="sm"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && custom) {
-              e.preventDefault()
-              onSelect(custom)
-            }
-          }}
-          placeholder="Search or enter a model id"
-          className="pl-8"
-          autoFocus
-        />
-      </div>
-      <div className="min-h-0 flex-1 overflow-y-auto">
+    <Command shouldFilter={false} value={highlight} onValueChange={setHighlight} className={cn("min-h-0 rounded-lg!", className)}>
+      <CommandInput value={query} onValueChange={search} placeholder="Search or enter a model id" autoFocus />
+      <CommandList className="max-h-none min-h-0 flex-1">
+        {live.status !== "loading" && <CommandEmpty>No models found.</CommandEmpty>}
+        {custom && !exact && (
+          <CommandGroup>
+            <CommandItem value={CUSTOM_PREFIX + custom} onSelect={() => onSelect(custom)}>
+              <Plus /> Use <span className="truncate font-medium">{custom}</span>
+            </CommandItem>
+          </CommandGroup>
+        )}
         {suggested.length > 0 && (
-          <>
-            <p className="px-2 pt-1 pb-0.5 eyebrow-xs text-brand-subtle">Suggested</p>
-            <ul>
-              {suggested.map((m) => (
-                <Option key={m.id} m={m} selected={m.id === value} onSelect={onSelect} />
-              ))}
-            </ul>
-          </>
+          <CommandGroup heading="Suggested">
+            {suggested.map((m) => (
+              <Option key={m.id} m={m} selected={m.id === value} onSelect={onSelect} />
+            ))}
+          </CommandGroup>
         )}
         {rest.length > 0 && (
-          <>
-            <p className="px-2 pt-2 pb-0.5 eyebrow-xs text-brand-subtle">All models</p>
-            <ul>
-              {rest.map((m) => (
-                <Option key={m.id} m={m} selected={m.id === value} onSelect={onSelect} />
-              ))}
-            </ul>
-          </>
+          <CommandGroup heading="All models">
+            {rest.map((m) => (
+              <Option key={m.id} m={m} selected={m.id === value} onSelect={onSelect} />
+            ))}
+          </CommandGroup>
         )}
         {live.status === "loading" && (
-          <p className="flex items-center gap-1.5 px-2 py-2 text-xs text-brand-subtle">
+          <p className="flex items-center gap-1.5 px-3 py-2 text-xs text-muted-foreground">
             <Loader2 className="size-3 animate-spin" /> Loading models from {provider.label}...
           </p>
         )}
-        {live.status === "offline" && !query && <p className="px-2 py-2 text-xs text-brand-subtle">Add a {provider.label} key to see every model it offers.</p>}
-        {live.status === "error" && <p className="px-2 py-2 text-xs text-danger">{live.error}</p>}
-        {custom && !exact && (
-          <button
-            type="button"
-            onClick={() => onSelect(custom)}
-            className="mt-1 flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm text-brand-dark transition-colors hover:bg-secondary"
-          >
-            <Plus className="size-3.5" /> Use <span className="truncate font-semibold">{custom}</span>
-          </button>
-        )}
-      </div>
-    </div>
+        {live.status === "offline" && !query && <p className="px-3 py-2 text-xs text-muted-foreground">Add a {provider.label} key to see every model it offers.</p>}
+        {live.status === "error" && <p className="px-3 py-2 text-xs text-destructive">{live.error}</p>}
+      </CommandList>
+    </Command>
+  )
+}
+
+/** Combobox trigger + popover around ModelOptions, shared by settings and the admin platform form. */
+export function ModelCombobox({ value, ...options }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button variant="outline" role="combobox" aria-expanded={open} aria-label="Model" className="w-full justify-between font-normal">
+          <span className="min-w-0 flex-1 truncate text-left font-medium">{value}</span>
+          <ChevronsUpDown className="text-muted-foreground" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent align="end" className="h-80 w-(--radix-popover-trigger-width) min-w-72 p-0">
+        <ModelOptions
+          {...options}
+          value={value}
+          onSelect={(model) => {
+            options.onSelect(model)
+            setOpen(false)
+          }}
+          className="h-full"
+        />
+      </PopoverContent>
+    </Popover>
   )
 }

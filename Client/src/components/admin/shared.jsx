@@ -1,7 +1,11 @@
 import { useCallback, useEffect, useState } from "react"
-import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react"
-import { BrandButton } from "@/components/brand/button"
-import { surfaceVariants } from "@/components/brand/surface"
+import { AlertCircle, ChevronLeft, ChevronRight } from "lucide-react"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Pagination, PaginationContent, PaginationItem } from "@/components/ui/pagination"
+import { Progress } from "@/components/ui/progress"
+import { Skeleton } from "@/components/ui/skeleton"
 import { cn } from "@/lib/utils"
 
 export const fmtNumber = (n) => (n ?? 0).toLocaleString()
@@ -45,22 +49,29 @@ export function useAdminData(fetcher, deps = []) {
   return { ...state, reload, setData }
 }
 
+/** Skeleton rows while a section loads. */
 export function Loading() {
   return (
-    <div className="grid place-items-center py-24">
-      <Loader2 className="size-6 animate-spin text-brand-dark" />
+    <div className="flex flex-col gap-3 py-6" aria-busy="true" aria-label="Loading">
+      <Skeleton className="h-8 w-1/3" />
+      <Skeleton className="h-4 w-full" />
+      <Skeleton className="h-4 w-5/6" />
+      <Skeleton className="h-4 w-2/3" />
     </div>
   )
 }
 
 export function LoadError({ error, onRetry }) {
   return (
-    <div className={cn(surfaceVariants(), "flex flex-col items-start gap-3 p-card")}>
-      <p className="text-sm text-danger">Couldn't load this: {error}</p>
-      <BrandButton variant="outline" onClick={onRetry}>
-        Try again
-      </BrandButton>
-    </div>
+    <Alert variant="destructive">
+      <AlertCircle />
+      <AlertDescription className="flex flex-col items-start gap-3">
+        <p>Couldn't load this: {error}</p>
+        <Button variant="outline" onClick={onRetry}>
+          Try again
+        </Button>
+      </AlertDescription>
+    </Alert>
   )
 }
 
@@ -71,33 +82,41 @@ export function AdminData({ result, children }) {
   return children(result.data)
 }
 
-const PILL = {
-  neutral: "bg-brand-fill text-brand-body",
-  brand: "bg-brand/25 text-brand-dark",
-  danger: "bg-danger-soft text-danger",
-  success: "bg-emerald-100 text-emerald-800",
-  warning: "bg-amber-100 text-amber-800",
-}
+// Legacy tone names; any other tone is used as the Badge variant (success, warning, destructive, ...).
+const PILL = { neutral: "secondary", brand: "default" }
 
+/** Status tag; `tone` maps onto a Badge variant. */
 export function Pill({ tone = "neutral", children, className }) {
-  return <span className={cn("inline-flex h-5 items-center rounded-full px-2 text-xs font-semibold whitespace-nowrap", PILL[tone], className)}>{children}</span>
+  return (
+    <Badge variant={PILL[tone] ?? tone} className={className}>
+      {children}
+    </Badge>
+  )
 }
 
 export function Pager({ page, pageSize, total, onPage }) {
   const pages = Math.max(1, Math.ceil(total / pageSize))
   if (pages <= 1) return null
   return (
-    <div className="flex items-center justify-end gap-2 text-sm text-brand-muted">
-      <span>
-        Page {page} of {pages}
-      </span>
-      <BrandButton variant="ghost" size="icon-sm" aria-label="Previous page" disabled={page <= 1} onClick={() => onPage(page - 1)}>
-        <ChevronLeft />
-      </BrandButton>
-      <BrandButton variant="ghost" size="icon-sm" aria-label="Next page" disabled={page >= pages} onClick={() => onPage(page + 1)}>
-        <ChevronRight />
-      </BrandButton>
-    </div>
+    <Pagination className="mx-0 w-auto justify-end">
+      <PaginationContent className="gap-1">
+        <PaginationItem>
+          <Button variant="ghost" aria-label="Previous page" disabled={page <= 1} onClick={() => onPage(page - 1)} className="pl-1.5">
+            <ChevronLeft />
+            <span className="hidden sm:block">Previous</span>
+          </Button>
+        </PaginationItem>
+        <PaginationItem className="px-2 text-sm text-muted-foreground tabular-nums">
+          Page {page} of {pages}
+        </PaginationItem>
+        <PaginationItem>
+          <Button variant="ghost" aria-label="Next page" disabled={page >= pages} onClick={() => onPage(page + 1)} className="pr-1.5">
+            <span className="hidden sm:block">Next</span>
+            <ChevronRight />
+          </Button>
+        </PaginationItem>
+      </PaginationContent>
+    </Pagination>
   )
 }
 
@@ -107,15 +126,11 @@ export function Meter({ used, limit, format = fmtNumber, zeroIsUnlimited = false
   const pct = unlimited ? 0 : limit === 0 ? 100 : Math.min(100, (used / limit) * 100)
   return (
     <div className="min-w-0">
-      <div className="flex justify-between text-xs text-brand-muted">
-        <span className="font-semibold text-brand-navy">{format(used)}</span>
+      <div className="flex justify-between gap-2 text-xs text-muted-foreground">
+        <span className="font-medium text-foreground tabular-nums">{format(used)}</span>
         <span>{unlimited ? "Unlimited" : `of ${format(limit)}`}</span>
       </div>
-      {!unlimited && (
-        <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-brand-fill">
-          <div className={cn("h-full rounded-full", pct >= 100 ? "bg-danger" : "bg-brand-dark")} style={{ width: `${pct}%` }} />
-        </div>
-      )}
+      {!unlimited && <Progress value={pct} className={cn("mt-1 h-1.5", pct >= 100 && "[&>[data-slot=progress-indicator]]:bg-destructive")} />}
     </div>
   )
 }

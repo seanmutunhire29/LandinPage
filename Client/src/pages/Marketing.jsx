@@ -8,13 +8,15 @@ import { Footer } from "@/components/marketing/Footer"
 
 export default function Marketing() {
   return (
-    <div className="min-h-svh bg-brand-mist">
+    <div className="min-h-svh bg-background">
       <Navbar />
-      <Hero />
-      <LogoMarquee />
-      <Problem />
-      <HowItWorks />
-      <CtaBand />
+      <main>
+        <Hero />
+        <LogoMarquee />
+        <Problem />
+        <HowItWorks />
+        <CtaBand />
+      </main>
       <Footer />
     </div>
   )

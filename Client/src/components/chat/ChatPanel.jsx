@@ -41,12 +41,12 @@ export function ChatPanel({ onSend, onRetry }) {
       : `Your site's first version is done. Add your own ${provider?.label} API key to keep editing it, or pick another provider from the model menu.`
 
   return (
-    <div className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden bg-white">
+    <div className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden bg-background">
       <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto px-4 py-5">
         <MessageList messages={messages} streaming={streaming} working={turnRunning} tools={tools} error={showKeyNotice ? null : error} onRetry={canRetry ? onRetry : undefined} />
       </div>
-      <div className="shrink-0 border-t border-border p-3">
-        {connection === "closed" && <p className="mb-2 text-xs text-brand-subtle">Reconnecting...</p>}
+      <div className="shrink-0 border-t p-3">
+        {connection === "closed" && <p className="mb-2 text-xs text-muted-foreground">Reconnecting...</p>}
         {showKeyNotice && <KeyNotice key={provider.id} provider={provider} message={keyMessage} onSaved={canRetry ? onRetry : undefined} />}
         <ChatInput
           onSubmit={onSend}

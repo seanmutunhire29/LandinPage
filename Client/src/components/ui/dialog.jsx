@@ -60,12 +60,22 @@ function DialogHeader({ className, ...props }) {
   return <div data-slot="dialog-header" className={cn("flex flex-col gap-1.5", className)} {...props} />
 }
 
+function DialogFooter({ className, ...props }) {
+  return (
+    <div
+      data-slot="dialog-footer"
+      className={cn("flex flex-col-reverse gap-2 sm:flex-row sm:justify-end", className)}
+      {...props}
+    />
+  )
+}
+
 function DialogTitle({ className, ...props }) {
-  return <DialogPrimitive.Title data-slot="dialog-title" className={cn("font-display text-xl font-semibold text-brand-navy", className)} {...props} />
+  return <DialogPrimitive.Title data-slot="dialog-title" className={cn("text-lg leading-none font-semibold", className)} {...props} />
 }
 
 function DialogDescription({ className, ...props }) {
   return <DialogPrimitive.Description data-slot="dialog-description" className={cn("text-sm text-muted-foreground", className)} {...props} />
 }
 
-export { Dialog, DialogTrigger, DialogClose, DialogContent, DialogHeader, DialogTitle, DialogDescription }
+export { Dialog, DialogTrigger, DialogClose, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription }

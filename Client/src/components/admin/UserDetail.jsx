@@ -1,13 +1,14 @@
 import { useState } from "react"
 import { Link, useNavigate, useParams } from "react-router-dom"
-import { ArrowLeft, Ban, ExternalLink, ShieldCheck, ShieldOff, Trash2, Undo2 } from "lucide-react"
+import { AlertCircle, ArrowLeft, Ban, ChevronRight, ShieldCheck, ShieldOff, Trash2, Undo2 } from "lucide-react"
 import { adminApi } from "@/lib/api"
 import { useAuthStore } from "@/store/useAuthStore"
-import { BrandButton } from "@/components/brand/button"
-import { BrandInput } from "@/components/brand/field"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { SettingsCard, SettingsRow } from "@/components/settings/SettingsCard"
 import { UserAvatar } from "@/components/account/UserAvatar"
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { AdminData, fmtCost, fmtDate, fmtNumber, fmtTokens, Meter, Pill, useAdminData } from "./shared"
 
 export function UserDetail() {
@@ -16,7 +17,7 @@ export function UserDetail() {
 
   return (
     <>
-      <Link to="/admin/users" className="mb-6 inline-flex items-center gap-1.5 text-sm font-semibold text-brand-muted hover:text-brand-navy">
+      <Link to="/admin/users" className="mb-6 inline-flex items-center gap-1.5 rounded-md text-sm font-medium text-muted-foreground transition-colors outline-none hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50">
         <ArrowLeft className="size-3.5" /> All users
       </Link>
       <AdminData result={result}>{(data) => <UserView data={data} onChange={result.setData} />}</AdminData>
@@ -54,21 +55,29 @@ function UserView({ data, onChange }) {
       <div className="flex flex-wrap items-center gap-4">
         <UserAvatar src={profile?.avatar_url} initial={(name || "?")[0].toUpperCase()} className="size-16 text-2xl" />
         <div className="min-w-0 flex-1">
-          <h1 className="truncate font-display text-3xl font-semibold text-brand-navy">{name}</h1>
-          <p className="text-sm text-brand-muted">
+          <h1 className="truncate text-2xl font-semibold tracking-tight md:text-3xl">{name}</h1>
+          <p className="text-sm break-words text-muted-foreground">
             {user.email} {profile?.username && `· @${profile.username}`} · signed in with {user.provider || "email"}
           </p>
           <div className="mt-2 flex flex-wrap gap-1">
             {user.is_admin && <Pill tone="brand">Admin</Pill>}
-            {settings.suspended_at ? <Pill tone="danger">Suspended {fmtDate(settings.suspended_at)}</Pill> : <Pill tone="success">Active</Pill>}
+            {settings.suspended_at ? <Pill tone="destructive">Suspended {fmtDate(settings.suspended_at)}</Pill> : <Pill tone="success">Active</Pill>}
             {isSelf && <Pill>You</Pill>}
           </div>
         </div>
       </div>
 
-      {error && <p className="rounded-2xl bg-danger-soft px-4 py-3 text-sm text-danger">{error}</p>}
+      {error && (
+        <Alert variant="destructive">
+          <AlertCircle />
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
       {settings.suspended_at && settings.suspended_reason && (
-        <p className="rounded-2xl bg-danger-soft px-4 py-3 text-sm text-danger">Suspension reason: {settings.suspended_reason}</p>
+        <Alert variant="destructive">
+          <Ban />
+          <AlertDescription>Suspension reason: {settings.suspended_reason}</AlertDescription>
+        </Alert>
       )}
 
       <SettingsCard title="Account">
@@ -86,18 +95,22 @@ function UserView({ data, onChange }) {
 
       <SettingsCard title={`Projects (${projects.length})`}>
         {projects.length === 0 ? (
-          <p className="py-5 text-sm text-brand-subtle">No projects yet.</p>
+          <p className="py-5 text-sm text-muted-foreground">No projects yet.</p>
         ) : (
           projects.map((p) => (
-            <Link key={p.id} to={`/admin/projects/${p.id}`} className="group flex items-center justify-between gap-4 py-3">
+            <Link
+              key={p.id}
+              to={`/admin/projects/${p.id}`}
+              className="group -mx-2 flex items-center justify-between gap-4 rounded-md px-2 py-3 transition-colors outline-none hover:bg-muted/50 focus-visible:ring-3 focus-visible:ring-ring/50"
+            >
               <div className="min-w-0">
-                <p className="truncate font-semibold text-brand-navy group-hover:text-brand-dark">{p.name}</p>
-                <p className="text-xs text-brand-subtle">
+                <p className="truncate font-medium group-hover:underline group-hover:underline-offset-4">{p.name}</p>
+                <p className="text-xs text-muted-foreground">
                   Created {fmtDate(p.created_at)} · updated {fmtDate(p.updated_at)}
                   {p.platform_generation && ` · free generation ${p.platform_generation}`}
                 </p>
               </div>
-              <ExternalLink className="size-4 shrink-0 text-brand-subtle group-hover:text-brand-dark" />
+              <ChevronRight className="size-4 shrink-0 text-muted-foreground group-hover:text-foreground" />
             </Link>
           ))
         )}
@@ -106,30 +119,30 @@ function UserView({ data, onChange }) {
       <SettingsCard title="Admin actions">
         <SettingsRow label="Admin access" description="Admins can open this dashboard. The user has to sign in again for it to take effect.">
           {user.is_admin ? (
-            <BrandButton variant="outline" size="sm" disabled={isSelf || !!busy} onClick={() => act("role", () => adminApi.setRole(user.id, false))}>
+            <Button variant="outline" size="sm" disabled={isSelf || !!busy} onClick={() => act("role", () => adminApi.setRole(user.id, false))}>
               <ShieldOff /> Remove admin
-            </BrandButton>
+            </Button>
           ) : (
-            <BrandButton variant="outline" size="sm" disabled={!!busy} onClick={() => act("role", () => adminApi.setRole(user.id, true))}>
+            <Button variant="outline" size="sm" disabled={!!busy} onClick={() => act("role", () => adminApi.setRole(user.id, true))}>
               <ShieldCheck /> Make admin
-            </BrandButton>
+            </Button>
           )}
         </SettingsRow>
         <SettingsRow label="Suspend" description="Blocks sign-in and stops the agent for this account immediately.">
           {settings.suspended_at ? (
-            <BrandButton variant="outline" size="sm" disabled={!!busy} onClick={() => act("unsuspend", () => adminApi.unsuspendUser(user.id))}>
+            <Button variant="outline" size="sm" disabled={!!busy} onClick={() => act("unsuspend", () => adminApi.unsuspendUser(user.id))}>
               <Undo2 /> Unsuspend
-            </BrandButton>
+            </Button>
           ) : (
-            <BrandButton variant="danger" size="sm" disabled={isSelf || user.is_admin || !!busy} onClick={() => setDialog("suspend")}>
+            <Button variant="destructive" size="sm" disabled={isSelf || user.is_admin || !!busy} onClick={() => setDialog("suspend")}>
               <Ban /> Suspend
-            </BrandButton>
+            </Button>
           )}
         </SettingsRow>
         <SettingsRow label="Delete account" description="Permanently deletes the account, projects, chats and keys.">
-          <BrandButton variant="danger" size="sm" disabled={isSelf || user.is_admin || !!busy} onClick={() => setDialog("delete")}>
+          <Button variant="destructive" size="sm" disabled={isSelf || user.is_admin || !!busy} onClick={() => setDialog("delete")}>
             <Trash2 /> Delete
-          </BrandButton>
+          </Button>
         </SettingsRow>
       </SettingsCard>
 
@@ -176,30 +189,30 @@ function LimitsCard({ userId, settings, usage, onSaved }) {
       description="Leave a limit empty to use the platform default. A token budget of 0 means unlimited."
       footer={
         <>
-          {error && <span className="mr-auto text-sm text-danger">{error}</span>}
-          <BrandButton variant="ghost" size="sm" disabled={saving} onClick={() => save({ reset_free_generations: true })}>
+          {error && <span className="mr-auto text-sm text-destructive">{error}</span>}
+          <Button variant="ghost" size="sm" disabled={saving} onClick={() => save({ reset_free_generations: true })}>
             Reset free generations
-          </BrandButton>
-          <BrandButton size="sm" disabled={!dirty || saving} onClick={() => save()}>
+          </Button>
+          <Button size="sm" disabled={!dirty || saving} onClick={() => save()}>
             Save limits
-          </BrandButton>
+          </Button>
         </>
       }
     >
       <SettingsRow label="Free generations" description={settings.free_generations_limit == null ? "Using the platform default." : "Custom limit for this user."}>
         <div className="flex flex-col gap-2">
           <Meter used={settings.free_generations_used} limit={settings.free_generations_limit_effective} />
-          <BrandInput size="sm" inputMode="numeric" value={free} onChange={(e) => setFree(e.target.value.replace(/\D/g, ""))} placeholder="Default" />
+          <Input inputMode="numeric" aria-label="Free generations limit" value={free} onChange={(e) => setFree(e.target.value.replace(/\D/g, ""))} placeholder="Default" />
         </div>
       </SettingsRow>
       <SettingsRow label="Platform token budget" description={`Prompt + completion tokens on your OpenRouter key. ${settings.token_budget == null ? "Using the platform default." : "Custom budget for this user."}`}>
         <div className="flex flex-col gap-2">
           <Meter used={usage.platform_tokens} limit={settings.token_budget_effective} format={fmtTokens} zeroIsUnlimited />
-          <BrandInput size="sm" inputMode="numeric" value={budget} onChange={(e) => setBudget(e.target.value.replace(/\D/g, ""))} placeholder="Default" />
+          <Input inputMode="numeric" aria-label="Platform token budget" value={budget} onChange={(e) => setBudget(e.target.value.replace(/\D/g, ""))} placeholder="Default" />
         </div>
       </SettingsRow>
       <SettingsRow label="Lifetime usage">
-        <p className="text-sm text-brand-body">
+        <p className="text-sm text-muted-foreground">
           {fmtNumber(usage.calls)} calls · {fmtTokens(usage.platform_tokens)} platform tokens ({fmtCost(usage.platform_cost)}) · {fmtTokens(usage.user_tokens)} on own keys
         </p>
       </SettingsRow>
@@ -216,15 +229,15 @@ function SuspendDialog({ open, onOpenChange, busy, onConfirm }) {
           <DialogTitle>Suspend this user?</DialogTitle>
           <DialogDescription>They'll be signed out within the hour and can't sign in or run the agent until you unsuspend them.</DialogDescription>
         </DialogHeader>
-        <BrandInput value={reason} onChange={(e) => setReason(e.target.value)} maxLength={200} placeholder="Reason (shown to the user)" />
-        <div className="flex justify-end gap-2">
-          <BrandButton variant="ghost" onClick={() => onOpenChange(false)}>
+        <Input value={reason} aria-label="Suspension reason" onChange={(e) => setReason(e.target.value)} maxLength={200} placeholder="Reason (shown to the user)" />
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
-          </BrandButton>
-          <BrandButton variant="navy" disabled={busy} onClick={() => onConfirm(reason)}>
+          </Button>
+          <Button variant="destructive" disabled={busy} onClick={() => onConfirm(reason)}>
             Suspend
-          </BrandButton>
-        </div>
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   )
@@ -257,16 +270,21 @@ function DeleteDialog({ open, onOpenChange, email, userId }) {
             This permanently deletes {email} with all their projects, chats and API keys. Type the email to confirm.
           </DialogDescription>
         </DialogHeader>
-        <BrandInput value={typed} onChange={(e) => setTyped(e.target.value)} placeholder={email} />
-        {error && <p className="text-sm text-danger">{error}</p>}
-        <div className="flex justify-end gap-2">
-          <BrandButton variant="ghost" onClick={() => onOpenChange(false)}>
+        <Input value={typed} aria-label="Type the email to confirm" onChange={(e) => setTyped(e.target.value)} placeholder={email} />
+        {error && (
+          <Alert variant="destructive">
+            <AlertCircle />
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
-          </BrandButton>
-          <BrandButton variant="navy" disabled={busy || typed.trim() !== email} onClick={confirm}>
+          </Button>
+          <Button variant="destructive" disabled={busy || typed.trim() !== email} onClick={confirm}>
             Delete forever
-          </BrandButton>
-        </div>
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   )

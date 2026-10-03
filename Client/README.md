@@ -55,7 +55,7 @@ The wizard works without a backend. To create projects and use the workspace, th
 src/
 ├── App.jsx                 Routes
 ├── main.jsx                Entry point
-├── index.css               Tailwind 4 theme, brand tokens, shadcn variables
+├── index.css               Tailwind 4 theme: shadcn neutral tokens for light and dark
 ├── data/                   Wizard content: directions, typography, palettes,
 │                           surfaces, components, sections, motion, stage registry
 ├── lib/
@@ -79,7 +79,8 @@ src/
 ├── pages/                  Marketing, onboarding/*, Profile, Settings, Workspace, AuthCallback
 └── components/
     ├── ui/                 shadcn/ui primitives
-    ├── brand/              Brand button, field, segmented control, surfaces
+    ├── theme-provider.jsx  Light / dark / system theme (saved in localStorage)
+    ├── mode-toggle.jsx     Header theme switcher
     ├── marketing/          Landing page sections
     ├── wizard/             Wizard layout, navigation, progress, option cards
     ├── previews/           Live samples for directions, surfaces, components, motion
@@ -98,7 +99,7 @@ src/
 
 The first stage is **Direction**, one of 20 named visual systems such as Minimal/Swiss, Brutalist or Glassmorphic. Each direction stores defaults for every later stage. `lib/filters.js` uses the chosen direction to narrow the options on each later stage. Changing an early choice clears any later choices it makes incompatible. That logic lives in `useDesignStore`.
 
-Previews on every stage are real components re-skinned by `lib/theme.js`, which turns the current selections into CSS variables. On the review step, `lib/buildSpec.js` compiles everything into:
+Previews on every stage are real components re-skinned by `lib/theme.js`, which turns the current selections into CSS variables. `<ThemeScope>` marks those subtrees with `data-theme-scope`, which resets them to the light tokens and opts them out of `dark:` variants, so previews look the same in either app theme. On the review step, `lib/buildSpec.js` compiles everything into:
 
 - `tokens`: typography, color roles, spacing, radius, shadow, border, blur, texture, motion, component variants
 - `composition`: ordered page sections and their layouts

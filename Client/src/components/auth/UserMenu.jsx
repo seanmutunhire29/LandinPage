@@ -1,77 +1,83 @@
-import { useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { Cpu, LogOut, Settings, ShieldCheck, UserRound } from "lucide-react"
 import { useAuthStore } from "@/store/useAuthStore"
 import { useAccountStore, useDisplayUser } from "@/store/useAccountStore"
 import { UserAvatar } from "@/components/account/UserAvatar"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Button } from "@/components/ui/button"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { shortModel } from "@/lib/providers"
 import { useIsAdmin } from "./RequireAdmin"
 
-function Item({ to, Icon, children, caption, onSelect }) {
-  return (
-    <Link
-      to={to}
-      onClick={onSelect}
-      className="flex items-center gap-2.5 rounded-full px-3 py-1.5 text-sm font-semibold text-brand-body transition-colors hover:bg-muted hover:text-brand-navy"
-    >
-      <Icon className="size-4 text-brand-subtle" />
-      <span className="flex-1">{children}</span>
-      {caption && <span className="max-w-24 truncate text-xs font-normal text-brand-subtle">{caption}</span>}
-    </Link>
-  )
-}
-
+/** Account dropdown: avatar trigger, profile/settings links and sign out. */
 export function UserMenu() {
   const me = useDisplayUser()
   const settings = useAccountStore((s) => s.settings)
   const signOut = useAuthStore((s) => s.signOut)
   const navigate = useNavigate()
-  const [open, setOpen] = useState(false)
   const isAdmin = useIsAdmin()
   if (!me) return null
-  const close = () => setOpen(false)
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger className="rounded-full ring-2 ring-white outline-none focus-visible:ring-4 focus-visible:ring-brand/30" aria-label="Account">
-        <UserAvatar src={me.avatar} initial={me.initial} className="text-sm" />
-      </PopoverTrigger>
-      <PopoverContent align="end" className="w-64 gap-1 rounded-[26px] p-2 shadow-float ring-0">
-        <Link to="/profile" onClick={close} className="flex items-center gap-3 rounded-2xl p-2 transition-colors hover:bg-brand-fill">
-          <UserAvatar src={me.avatar} initial={me.initial} className="size-10 text-base" />
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="icon" className="rounded-full" aria-label="Account">
+          <UserAvatar src={me.avatar} initial={me.initial} className="size-7 text-xs" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-60">
+        <DropdownMenuLabel className="flex items-center gap-2 font-normal">
+          <UserAvatar src={me.avatar} initial={me.initial} />
           <div className="min-w-0">
-            <p className="truncate text-sm font-semibold text-brand-navy">{me.name}</p>
-            <p className="truncate text-xs text-brand-subtle">{me.username ? `@${me.username}` : me.email}</p>
+            <p className="truncate text-sm font-medium text-foreground">{me.name}</p>
+            <p className="truncate text-xs text-muted-foreground">{me.username ? `@${me.username}` : me.email}</p>
           </div>
-        </Link>
-        <div className="my-1 h-px bg-border" />
-        <Item to="/profile" Icon={UserRound} onSelect={close}>
-          Profile & projects
-        </Item>
-        <Item to="/settings/models" Icon={Cpu} caption={settings && shortModel(settings.model)} onSelect={close}>
-          Models & API keys
-        </Item>
-        <Item to="/settings/profile" Icon={Settings} onSelect={close}>
-          Settings
-        </Item>
-        {isAdmin && (
-          <Item to="/admin/overview" Icon={ShieldCheck} onSelect={close}>
-            Admin dashboard
-          </Item>
-        )}
-        <div className="my-1 h-px bg-border" />
-        <button
-          onClick={async () => {
-            close()
+        </DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuGroup>
+          <DropdownMenuItem asChild>
+            <Link to="/profile">
+              <UserRound /> Profile & projects
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link to="/settings/models">
+              <Cpu />
+              <span className="flex-1">Models & API keys</span>
+              {settings && <span className="max-w-24 truncate text-xs text-muted-foreground">{shortModel(settings.model)}</span>}
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link to="/settings/profile">
+              <Settings /> Settings
+            </Link>
+          </DropdownMenuItem>
+          {isAdmin && (
+            <DropdownMenuItem asChild>
+              <Link to="/admin/overview">
+                <ShieldCheck /> Admin dashboard
+              </Link>
+            </DropdownMenuItem>
+          )}
+        </DropdownMenuGroup>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          variant="destructive"
+          onSelect={async () => {
             await signOut()
             navigate("/")
           }}
-          className="flex items-center gap-2.5 rounded-full px-3 py-1.5 text-sm font-semibold text-brand-body transition-colors hover:bg-danger-soft hover:text-danger"
         >
-          <LogOut className="size-4" /> Sign out
-        </button>
-      </PopoverContent>
-    </Popover>
+          <LogOut /> Sign out
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   )
 }

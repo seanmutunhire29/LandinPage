@@ -2,17 +2,17 @@ import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { Search } from "lucide-react"
 import { adminApi } from "@/lib/api"
-import { fieldVariants } from "@/components/brand/field"
 import { SettingsCard, SettingsHeader } from "@/components/settings/SettingsCard"
 import { UserAvatar } from "@/components/account/UserAvatar"
-import { cn } from "@/lib/utils"
+import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { AdminData, fmtDate, fmtNumber, fmtTokens, Meter, Pager, Pill, useAdminData } from "./shared"
 
 export function UserStatus({ user }) {
   return (
     <span className="flex flex-wrap gap-1">
       {user.is_admin && <Pill tone="brand">Admin</Pill>}
-      {user.suspended_at ? <Pill tone="danger">Suspended</Pill> : <Pill tone="success">Active</Pill>}
+      {user.suspended_at ? <Pill tone="destructive">Suspended</Pill> : <Pill tone="success">Active</Pill>}
     </span>
   )
 }
@@ -39,70 +39,74 @@ export function UsersSection() {
       <SettingsCard
         title={result.data ? `${fmtNumber(result.data.total)} ${result.data.total === 1 ? "user" : "users"}` : "Users"}
         action={
-          <label className={cn(fieldVariants({ size: "sm" }), "flex w-64 items-center gap-2")}>
-            <Search className="size-3.5 text-brand-subtle" />
-            <input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search email, username or name"
-              className="min-w-0 flex-1 bg-transparent outline-none placeholder:text-brand-subtle"
-            />
-          </label>
+          <InputGroup className="w-44 sm:w-64">
+            <InputGroupAddon>
+              <Search />
+            </InputGroupAddon>
+            <InputGroupInput value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search email, username or name" aria-label="Search users" />
+          </InputGroup>
         }
         footer={result.data && <Pager page={page} pageSize={result.data.page_size} total={result.data.total} onPage={setPage} />}
       >
         <AdminData result={result}>
           {({ users }) =>
             users.length === 0 ? (
-              <p className="py-8 text-center text-sm text-brand-subtle">No users match.</p>
+              <p className="py-8 text-center text-sm text-muted-foreground">No users match.</p>
             ) : (
-              <div className="-mx-card overflow-x-auto">
-                <table className="w-full min-w-[860px] text-sm">
-                  <thead className="text-left text-xs text-brand-subtle">
-                    <tr className="border-b border-border">
-                      <th className="py-3 pl-card font-semibold">User</th>
-                      <th className="py-3 font-semibold">Joined</th>
-                      <th className="py-3 font-semibold">Last sign-in</th>
-                      <th className="py-3 text-right font-semibold">Projects</th>
-                      <th className="w-32 py-3 pl-6 font-semibold">Free generations</th>
-                      <th className="w-32 py-3 pl-6 font-semibold">Platform tokens</th>
-                      <th className="py-3 pr-card pl-6 font-semibold">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-border text-brand-body">
+              <div className="-mx-4 mt-3">
+                <Table className="min-w-[860px]">
+                  <TableHeader>
+                    <TableRow className="hover:bg-transparent">
+                      <TableHead className="pl-4 text-muted-foreground">User</TableHead>
+                      <TableHead className="text-muted-foreground">Joined</TableHead>
+                      <TableHead className="text-muted-foreground">Last sign-in</TableHead>
+                      <TableHead className="text-right text-muted-foreground">Projects</TableHead>
+                      <TableHead className="w-32 pl-6 text-muted-foreground">Free generations</TableHead>
+                      <TableHead className="w-32 pl-6 text-muted-foreground">Platform tokens</TableHead>
+                      <TableHead className="pr-4 pl-6 text-muted-foreground">Status</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
                     {users.map((u) => (
-                      <tr
+                      <TableRow
                         key={u.id}
+                        tabIndex={0}
                         onClick={() => navigate(`/admin/users/${u.id}`)}
-                        className="cursor-pointer transition-colors hover:bg-brand-mist"
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault()
+                            navigate(`/admin/users/${u.id}`)
+                          }
+                        }}
+                        className="cursor-pointer outline-none hover:bg-muted/50 focus-visible:bg-muted/50 focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-inset"
                       >
-                        <td className="py-3 pl-card">
+                        <TableCell className="py-3 pl-4">
                           <div className="flex items-center gap-3">
                             <UserAvatar src={u.avatar_url} initial={(u.display_name || u.email || "?")[0].toUpperCase()} className="size-8 text-xs" />
                             <div className="min-w-0">
-                              <p className="truncate font-semibold text-brand-navy">{u.email}</p>
-                              <p className="truncate text-xs text-brand-subtle">
+                              <p className="truncate font-medium">{u.email}</p>
+                              <p className="truncate text-xs text-muted-foreground">
                                 {u.username ? `@${u.username}` : "No profile yet"} · {u.provider || "email"}
                               </p>
                             </div>
                           </div>
-                        </td>
-                        <td className="py-3 whitespace-nowrap">{fmtDate(u.created_at)}</td>
-                        <td className="py-3 whitespace-nowrap">{fmtDate(u.last_sign_in_at)}</td>
-                        <td className="py-3 text-right tabular-nums">{fmtNumber(u.projects)}</td>
-                        <td className="py-3 pl-6">
+                        </TableCell>
+                        <TableCell className="py-3">{fmtDate(u.created_at)}</TableCell>
+                        <TableCell className="py-3">{fmtDate(u.last_sign_in_at)}</TableCell>
+                        <TableCell className="py-3 text-right tabular-nums">{fmtNumber(u.projects)}</TableCell>
+                        <TableCell className="py-3 pl-6">
                           <Meter used={u.free_generations_used} limit={u.free_generations_limit_effective} />
-                        </td>
-                        <td className="py-3 pl-6">
+                        </TableCell>
+                        <TableCell className="py-3 pl-6">
                           <Meter used={u.platform_tokens} limit={u.token_budget_effective} format={fmtTokens} zeroIsUnlimited />
-                        </td>
-                        <td className="py-3 pr-card pl-6">
+                        </TableCell>
+                        <TableCell className="py-3 pr-4 pl-6">
                           <UserStatus user={u} />
-                        </td>
-                      </tr>
+                        </TableCell>
+                      </TableRow>
                     ))}
-                  </tbody>
-                </table>
+                  </TableBody>
+                </Table>
               </div>
             )
           }

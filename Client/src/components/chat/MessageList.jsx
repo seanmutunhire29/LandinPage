@@ -1,13 +1,15 @@
 import { Fragment, useEffect, useRef } from "react"
 import { AlertCircle, CheckCircle2, CircleDashed, FilePen, FilePlus2, FileSearch, Globe, Loader2, Plug, Sparkles, SquareTerminal, XCircle } from "lucide-react"
 import { LogoMark } from "@/components/marketing/Logo"
+import { Alert, AlertAction, AlertDescription } from "@/components/ui/alert"
+import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
 /** Minimal inline formatting for agent replies: `code` and **bold**. */
 function formatText(text) {
   return text.split(/(`[^`\n]+`|\*\*[^*\n]+\*\*)/g).map((part, i) => {
     if (part.startsWith("`") && part.endsWith("`") && part.length > 2)
-      return <code key={i} className="rounded-md bg-secondary px-1 py-0.5 font-mono text-[0.85em] text-brand-navy">{part.slice(1, -1)}</code>
+      return <code key={i} className="rounded-md bg-muted px-1 py-0.5 font-mono text-[0.85em] text-foreground">{part.slice(1, -1)}</code>
     if (part.startsWith("**") && part.endsWith("**") && part.length > 4) return <strong key={i}>{part.slice(2, -2)}</strong>
     return <Fragment key={i}>{part}</Fragment>
   })
@@ -23,11 +25,11 @@ function parseArgs(call) {
 
 /** Per-tool visual language: accent color, icon, a short kind label and the target. */
 const TOOL_STYLES = {
-  read: { tile: "bg-tool-read/12 text-tool-read", kind: "text-tool-read", sweep: "bg-tool-read", ring: "ring-tool-read/50" },
-  write: { tile: "bg-tool-write/12 text-tool-write", kind: "text-tool-write", sweep: "bg-tool-write", ring: "ring-tool-write/50" },
-  bash: { tile: "bg-white/10 text-brand-green", kind: "text-white/50", sweep: "bg-brand-green", ring: "ring-brand-green/60" },
-  web: { tile: "bg-brand-yellow/20 text-tool-web", kind: "text-tool-web", sweep: "bg-brand-yellow", ring: "ring-brand-yellow/60" },
-  mcp: { tile: "bg-tool-mcp/12 text-tool-mcp", kind: "text-tool-mcp", sweep: "bg-tool-mcp", ring: "ring-tool-mcp/50" },
+  read: { tile: "bg-tool-read/10 text-tool-read", kind: "text-tool-read", sweep: "bg-tool-read", ring: "border-tool-read/50" },
+  write: { tile: "bg-tool-write/10 text-tool-write", kind: "text-tool-write", sweep: "bg-tool-write", ring: "border-tool-write/50" },
+  bash: { tile: "bg-muted text-tool-bash", kind: "text-tool-bash", sweep: "bg-tool-bash", ring: "border-tool-bash/50" },
+  web: { tile: "bg-tool-web/10 text-tool-web", kind: "text-tool-web", sweep: "bg-tool-web", ring: "border-tool-web/50" },
+  mcp: { tile: "bg-tool-mcp/10 text-tool-mcp", kind: "text-tool-mcp", sweep: "bg-tool-mcp", ring: "border-tool-mcp/50" },
 }
 
 function describeTool(name, args) {
@@ -41,10 +43,10 @@ function describeTool(name, args) {
 }
 
 const STATUS = {
-  pending: { label: "Queued", Icon: CircleDashed, className: "text-brand-subtle" },
+  pending: { label: "Queued", Icon: CircleDashed, className: "text-muted-foreground" },
   running: { label: "Running", Icon: Loader2, spin: true },
   ok: { label: "Done", Icon: CheckCircle2, className: "text-success" },
-  error: { label: "Failed", Icon: XCircle, className: "text-brand-red" },
+  error: { label: "Failed", Icon: XCircle, className: "text-destructive" },
 }
 
 /** Muted directory, emphasised file name. */
@@ -53,8 +55,8 @@ function FilePath({ path }) {
   const i = path.lastIndexOf("/")
   return (
     <>
-      {i >= 0 && <span className="text-brand-subtle">{path.slice(0, i + 1)}</span>}
-      <span className="font-semibold">{path.slice(i + 1)}</span>
+      {i >= 0 && <span className="text-muted-foreground">{path.slice(0, i + 1)}</span>}
+      <span className="font-medium">{path.slice(i + 1)}</span>
     </>
   )
 }
@@ -70,24 +72,23 @@ function ToolCard({ call, live, status }) {
       data-status={status}
       title={live?.summary}
       className={cn(
-        "relative flex items-center gap-2.5 overflow-hidden rounded-xl p-1.5 pr-2.5 text-xs ring-1 transition-[opacity,box-shadow]",
-        bash ? "bg-brand-navy text-white ring-brand-navy" : "bg-white text-brand-navy ring-border",
-        status === "pending" && "opacity-55",
-        status === "running" && cn("shadow-lift", s.ring),
-        status === "error" && "ring-brand-red/50"
+        "relative flex items-center gap-2.5 overflow-hidden rounded-lg border bg-card p-1.5 pr-2.5 text-xs text-card-foreground transition-[opacity,border-color]",
+        status === "pending" && "opacity-60",
+        status === "running" && cn("shadow-xs", s.ring),
+        status === "error" && "border-destructive/50"
       )}
     >
-      <span className={cn("grid size-7 shrink-0 place-items-center rounded-lg", s.tile)}>
+      <span className={cn("grid size-7 shrink-0 place-items-center rounded-md", s.tile)}>
         <Icon className="size-3.5" />
       </span>
       <div className="min-w-0 flex-1 leading-tight">
-        <p className={cn("text-xs font-semibold tracking-wider uppercase", s.kind)}>{kind}</p>
-        <p className={cn("truncate", bash && "font-mono text-xs text-white/90")}>
-          {bash && <span className="mr-1 text-brand-green">$</span>}
+        <p className={cn("text-xs font-medium tracking-wide uppercase", s.kind)}>{kind}</p>
+        <p className={cn("truncate", bash && "font-mono text-xs")}>
+          {bash && <span className="mr-1 text-success">$</span>}
           {path !== undefined ? <FilePath path={path} /> : target}
         </p>
       </div>
-      <span className={cn("inline-flex shrink-0 items-center gap-1 text-xs font-medium", bash && status !== "error" ? "text-white/60" : (st.className ?? s.kind))}>
+      <span className={cn("inline-flex shrink-0 items-center gap-1 text-xs font-medium", bash && status !== "error" ? "text-muted-foreground" : (st.className ?? s.kind))}>
         <st.Icon className={cn("size-3.5", st.spin && "animate-spin")} />
         <span>{st.label}</span>
       </span>
@@ -126,19 +127,19 @@ export function MessageList({ messages, streaming = "", working = false, tools =
         t.role === "user" ? (
           <div
             key={t.id}
-            className="ml-10 max-w-full self-end rounded-2xl rounded-tr-md bg-secondary px-4 py-2.5 text-ui leading-relaxed whitespace-pre-wrap text-brand-navy ring-1 ring-brand/10"
+            className="ml-10 max-w-full self-end rounded-xl bg-primary px-3.5 py-2 text-sm leading-relaxed whitespace-pre-wrap text-primary-foreground"
           >
             {t.content}
           </div>
         ) : (
           <div key={t.id} className="grid min-w-0 grid-cols-[1.5rem_minmax(0,1fr)] gap-x-2.5">
             <LogoMark className="size-6" />
-            <p className="self-center font-display text-sm font-semibold text-brand-navy">LandinPage</p>
-            <span className="mx-auto mt-1.5 w-px bg-gradient-to-b from-border to-transparent" aria-hidden />
+            <p className="self-center text-sm font-semibold text-foreground">LandinPage</p>
+            <span className="mx-auto mt-1.5 w-px bg-border" aria-hidden />
             <div className="flex min-w-0 flex-col gap-2.5 pt-1.5 pb-1">
               {t.items.map((m) => (
                 <Fragment key={m.id}>
-                  {m.content && <div className="text-ui leading-relaxed whitespace-pre-wrap text-brand-navy">{formatText(m.content)}</div>}
+                  {m.content && <div className="text-sm leading-relaxed whitespace-pre-wrap text-foreground">{formatText(m.content)}</div>}
                   {m.tool_calls?.length > 0 && (
                     <ul className="flex flex-col gap-1.5">
                       {m.tool_calls.map((call) => (
@@ -148,11 +149,11 @@ export function MessageList({ messages, streaming = "", working = false, tools =
                   )}
                 </Fragment>
               ))}
-              {t === lastTurn && streaming && <div className="text-ui leading-relaxed whitespace-pre-wrap text-brand-navy">{formatText(streaming)}</div>}
+              {t === lastTurn && streaming && <div className="text-sm leading-relaxed whitespace-pre-wrap text-foreground">{formatText(streaming)}</div>}
               {t === lastTurn && working && !streaming && (
                 <div className="flex items-center gap-1 py-1" role="status" aria-label="Working">
                   {[0, 150, 300].map((d) => (
-                    <span key={d} className="size-1.5 animate-bounce rounded-full bg-brand/60" style={{ animationDelay: `${d}ms` }} />
+                    <span key={d} className="size-1.5 animate-bounce rounded-full bg-muted-foreground/60" style={{ animationDelay: `${d}ms` }} />
                   ))}
                 </div>
               )}
@@ -161,15 +162,17 @@ export function MessageList({ messages, streaming = "", working = false, tools =
         )
       )}
       {error && (
-        <div role="alert" className="flex min-w-0 items-start gap-2 rounded-2xl bg-danger-soft px-3.5 py-2.5 text-sm text-danger ring-1 ring-danger/20">
-          <AlertCircle className="mt-0.5 size-4 shrink-0" />
-          <p className="line-clamp-6 min-w-0 flex-1">{error}</p>
+        <Alert variant="destructive" className="min-w-0">
+          <AlertCircle />
+          <AlertDescription className="line-clamp-6 min-w-0">{error}</AlertDescription>
           {onRetry && (
-            <button onClick={onRetry} className="shrink-0 font-semibold underline hover:no-underline">
-              Retry
-            </button>
+            <AlertAction>
+              <Button variant="outline" size="xs" onClick={onRetry}>
+                Retry
+              </Button>
+            </AlertAction>
           )}
-        </div>
+        </Alert>
       )}
       <div ref={end} />
     </div>

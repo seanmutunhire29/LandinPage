@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
-import { ArrowLeft, Check, Copy, Loader2, Pencil, RotateCcw, Sparkles } from "lucide-react"
+import { AlertCircle, ArrowLeft, Check, Copy, Loader2, Pencil, RotateCcw, Sparkles } from "lucide-react"
 import { useDesignStore } from "@/store/useDesignStore"
 import { useAuthStore } from "@/store/useAuthStore"
 import { buildSpec } from "@/lib/buildSpec"
@@ -10,7 +10,10 @@ import { StageHeader } from "@/components/wizard/StageHeader"
 import { useStageNav } from "@/components/wizard/useStageNav"
 import { ChatInput } from "@/components/chat/ChatInput"
 import { AuthDialog } from "@/components/auth/AuthDialog"
+import { Alert, AlertAction, AlertDescription } from "@/components/ui/alert"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Card } from "@/components/ui/card"
 
 const SUGGESTIONS = [
   "A landing page for a project management SaaS",
@@ -66,95 +69,98 @@ export default function Review() {
   return (
     <StagePage>
       <StageHeader eyebrow="Final step" title="Describe your project" blurb="Your design system is ready. Tell us what the page is for and we'll build it live.">
-        <Button variant="outline" size="lg" onClick={copy} className="h-11 shrink-0 rounded-full px-5">
-          {copied ? <Check data-icon="inline-start" className="text-brand-green" /> : <Copy data-icon="inline-start" />}
+        <Button variant="outline" size="lg" onClick={copy} className="shrink-0 self-start md:self-auto">
+          {copied ? <Check data-icon="inline-start" className="text-success" /> : <Copy data-icon="inline-start" />}
           {copied ? "Copied" : "Copy JSON"}
         </Button>
       </StageHeader>
 
       <div className="mx-auto flex max-w-3xl flex-col gap-4 pb-16">
-        <div className="flex flex-wrap items-center gap-2 text-xs text-brand-muted">
+        <div className="flex flex-wrap items-center gap-2">
           {summary.map((s) => (
-            <span key={s} className="rounded-full bg-white px-3 py-1 font-medium shadow-clay-sm">
+            <Badge key={s} variant="outline" className="max-w-full truncate">
               {s}
-            </span>
+            </Badge>
           ))}
-          <Link to="/onboarding/direction" className="inline-flex items-center gap-1 px-1 font-semibold text-brand-dark hover:underline">
-            <Pencil className="size-3" /> Edit choices
-          </Link>
+          <Button variant="link" size="sm" asChild className="px-1">
+            <Link to="/onboarding/direction">
+              <Pencil data-icon="inline-start" /> Edit choices
+            </Link>
+          </Button>
         </div>
 
-        <section className="flex min-h-[420px] flex-col rounded-[39px] bg-white p-5 shadow-clay md:p-7" aria-label="Project chat">
+        <Card role="region" aria-label="Project chat" className="min-h-[420px] px-4 py-5 md:p-6">
           <div className="flex flex-1 flex-col gap-4">
             <div className="flex gap-3">
-              <span className="grid size-8 shrink-0 place-items-center rounded-full bg-brand text-brand-navy">
+              <span className="grid size-8 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground">
                 <Sparkles className="size-4" />
               </span>
-              <p className="pt-1 text-[15px] leading-relaxed text-brand-navy">
+              <p className="pt-1 text-sm leading-relaxed text-foreground md:text-base">
                 What are we building? Describe the product and who it's for. I'll use your spec for every design decision and write the copy too.
               </p>
             </div>
 
             {sent && (
-              <div className="ml-8 self-end rounded-3xl rounded-br-lg bg-brand px-4 py-2.5 text-[15px] whitespace-pre-wrap text-brand-navy shadow-brand-sm">{sent}</div>
+              <div className="ml-8 self-end rounded-xl rounded-br-sm bg-primary px-4 py-2.5 text-sm whitespace-pre-wrap text-primary-foreground md:text-base">{sent}</div>
             )}
 
             {sent && !user && !authOpen && (
-              <div className="flex flex-wrap items-center gap-3 rounded-2xl bg-brand-mist p-4 text-sm text-brand-muted">
+              <div className="flex flex-wrap items-center gap-3 rounded-lg border bg-muted/50 p-4 text-sm text-muted-foreground">
                 <span className="flex-1">Sign in to save your progress and start building.</span>
-                <Button onClick={() => setAuthOpen(true)} className="rounded-full bg-brand px-5 font-bold text-brand-navy shadow-brand-sm transition-transform duration-200 ease-spring hover:scale-[1.03] hover:bg-brand active:scale-95">
-                  Continue
-                </Button>
+                <Button onClick={() => setAuthOpen(true)}>Continue</Button>
               </div>
             )}
 
             {creating && (
-              <div className="flex items-center gap-2 text-sm text-brand-muted">
-                <Loader2 className="size-4 animate-spin text-brand-dark" /> Setting up your project...
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Loader2 className="size-4 animate-spin text-muted-foreground" /> Setting up your project...
               </div>
             )}
             {error && (
-              <div className="flex flex-wrap items-center gap-3 rounded-xl bg-danger-soft px-3 py-2.5 text-sm text-danger ring-1 ring-danger/20">
-                <span className="flex-1">Couldn't create the project: {error}</span>
-                <button onClick={create} className="font-semibold underline">
-                  Try again
-                </button>
-              </div>
+              <Alert variant="destructive">
+                <AlertCircle />
+                <AlertDescription className="text-destructive/90">Couldn't create the project: {error}</AlertDescription>
+                <AlertAction>
+                  <Button variant="outline" size="xs" onClick={create}>
+                    Try again
+                  </Button>
+                </AlertAction>
+              </Alert>
             )}
           </div>
 
           {!sent && (
-            <div className="mt-6 flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2">
               {SUGGESTIONS.map((s) => (
-                <button key={s} onClick={() => submit(s)} className="rounded-full bg-brand-mist px-3 py-1.5 text-left text-xs font-medium text-brand-muted shadow-clay-sm hover:text-brand-dark">
+                <Button key={s} variant="outline" size="sm" onClick={() => submit(s)} className="h-auto min-h-7 py-1 text-left whitespace-normal text-muted-foreground">
                   {s}
-                </button>
+                </Button>
               ))}
             </div>
           )}
           <ChatInput
-            className="mt-4"
             onSubmit={submit}
             busy={creating}
             disabled={Boolean(sent) && !error}
             autoFocus
             placeholder="e.g. A landing page for a project management SaaS aimed at agencies"
           />
-        </section>
+        </Card>
 
-        <div className="flex items-center justify-between text-sm font-semibold text-brand-muted">
-          <button onClick={goBack} className="inline-flex items-center gap-2 hover:text-brand-navy">
-            <ArrowLeft className="size-4" /> Back
-          </button>
-          <button
+        <div className="flex items-center justify-between">
+          <Button variant="ghost" onClick={goBack} className="text-muted-foreground">
+            <ArrowLeft data-icon="inline-start" /> Back
+          </Button>
+          <Button
+            variant="ghost"
             onClick={() => {
               reset()
               navigate("/onboarding/direction")
             }}
-            className="inline-flex items-center gap-2 hover:text-brand-red"
+            className="text-muted-foreground hover:text-destructive"
           >
-            <RotateCcw className="size-4" /> Start over
-          </button>
+            <RotateCcw data-icon="inline-start" /> Start over
+          </Button>
         </div>
       </div>
 

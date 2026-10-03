@@ -1,9 +1,11 @@
 import { Check, Sparkles } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 
 /**
  * Selectable option tile. Uses role="radio" by default so a grid of cards
  * behaves like a radio group; pass role="checkbox" for multi-select grids.
+ * Stays hand-built (not RadioGroup) because each card hosts a live preview.
  */
 export function OptionCard({ selected, recommended, onSelect, title, subtitle, children, className, footer, role = "radio", badges, disabled }) {
   const select = () => !disabled && onSelect()
@@ -24,37 +26,38 @@ export function OptionCard({ selected, recommended, onSelect, title, subtitle, c
       onClick={select}
       onKeyDown={handleKey}
       className={cn(
-        "group relative flex flex-col overflow-hidden rounded-[26px] bg-white text-left transition-[transform,box-shadow] duration-200 ease-spring outline-none",
-        "hover:scale-[1.02] hover:shadow-clay active:scale-[0.98] focus-visible:ring-4 focus-visible:ring-brand/40",
-        disabled ? "cursor-default" : "cursor-pointer",
-        selected ? "shadow-clay ring-[3px] ring-brand" : "shadow-clay-sm",
+        "group relative flex flex-col overflow-hidden rounded-xl border bg-card text-left text-card-foreground transition-colors outline-none",
+        "focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50",
+        disabled ? "cursor-default" : "cursor-pointer hover:bg-accent/40",
+        selected && "border-primary ring-1 ring-primary",
         className
       )}
     >
-      {children && <div className="relative">{children}</div>}
+      {children && <div className="relative border-b">{children}</div>}
       <div className="flex items-start gap-3 px-4 pt-3 pb-4">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <h3 className="font-display text-[15px] leading-tight font-semibold text-brand-navy">{title}</h3>
+            <h3 className="text-sm leading-tight font-semibold">{title}</h3>
             {recommended && (
-              <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold text-warning ring-[1.5px] ring-brand-yellow">
-                <Sparkles className="size-3" /> Recommended
-              </span>
+              <Badge variant="outline">
+                <Sparkles /> Recommended
+              </Badge>
             )}
             {badges}
           </div>
-          {subtitle && <p className="mt-1 text-[13px] leading-snug text-brand-muted">{subtitle}</p>}
+          {subtitle && <p className="mt-1 text-sm leading-snug text-muted-foreground">{subtitle}</p>}
           {footer}
         </div>
         <span
           aria-hidden
           className={cn(
-            "mt-0.5 grid size-6 shrink-0 place-items-center rounded-full transition-[transform,background-color] duration-200 ease-spring",
-            role === "checkbox" && "rounded-lg",
-            selected ? "scale-110 bg-brand text-brand-navy shadow-brand-sm" : "bg-brand-fill text-transparent shadow-clay-inset"
+            "mt-0.5 grid size-5 shrink-0 place-items-center rounded-full border transition-colors",
+            role === "checkbox" && "rounded-md",
+            selected ? "border-primary bg-primary text-primary-foreground" : "border-input bg-background text-transparent",
+            disabled && "opacity-50"
           )}
         >
-          <Check className="size-3.5" strokeWidth={3} />
+          <Check className="size-3" strokeWidth={3} />
         </span>
       </div>
     </div>
@@ -63,7 +66,7 @@ export function OptionCard({ selected, recommended, onSelect, title, subtitle, c
 
 export function OptionGrid({ children, label, cols = "sm:grid-cols-2 lg:grid-cols-3", className, role = "radiogroup" }) {
   return (
-    <div role={role} aria-label={label} className={cn("grid grid-cols-1 gap-5", cols, className)}>
+    <div role={role} aria-label={label} className={cn("grid grid-cols-1 gap-4", cols, className)}>
       {children}
     </div>
   )

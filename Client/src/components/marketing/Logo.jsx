@@ -14,13 +14,16 @@ export function LogoMark({ className }) {
 
 const SIZES = { md: "h-7", sm: "h-6" }
 
-/** Wordmark image from public/logo.png. The PNG has an off-white background, so multiply blends it into light surfaces. */
+/**
+ * Wordmark image from public/logo.png. The PNG is navy on off-white: multiply blends it into light
+ * surfaces, and in dark mode it is inverted (hue-rotated back) and screened so it reads light on dark.
+ */
 export function Logo({ className, size = "md" }) {
   return (
     <img
       src="/logo.png"
       alt="LandinPage"
-      className={cn("inline-block w-auto shrink-0 select-none mix-blend-multiply", SIZES[size], className)}
+      className={cn("inline-block w-auto shrink-0 select-none mix-blend-multiply dark:mix-blend-screen dark:invert dark:hue-rotate-180", SIZES[size], className)}
       draggable={false}
     />
   )

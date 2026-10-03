@@ -1,15 +1,15 @@
 import { useState } from "react"
-import { ChevronsUpDown, Info, KeyRound } from "lucide-react"
+import { Info, KeyRound } from "lucide-react"
+import { toast } from "sonner"
 import { adminApi } from "@/lib/api"
-import { BrandButton } from "@/components/brand/button"
-import { BrandInput, fieldVariants } from "@/components/brand/field"
 import { SettingsCard, SettingsHeader, SettingsRow } from "@/components/settings/SettingsCard"
-import { ModelOptions } from "@/components/settings/ModelOptions"
+import { ModelCombobox } from "@/components/settings/ModelOptions"
 import { KeyRow } from "@/components/settings/ModelsSection"
-import { ProviderTile } from "@/components/account/UserAvatar"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { ProviderChoice } from "@/components/settings/ProviderChoice"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
-import { cn } from "@/lib/utils"
 import { AdminData, fmtNumber, useAdminData } from "./shared"
 
 const NUMBER_FIELDS = ["free_generations", "default_token_budget", "max_tokens"]
@@ -31,7 +31,7 @@ function PlatformForm({ data, onSaved }) {
   const { values, defaults, providers, keys } = data
   const [form, setForm] = useState(() => ({ ...values, ...Object.fromEntries(NUMBER_FIELDS.map((k) => [k, String(values[k])])) }))
   const [saving, setSaving] = useState(false)
-  const [message, setMessage] = useState(null)
+  const [error, setError] = useState(null)
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }))
 
   const provider = providers.find((p) => p.id === form.platform_provider) ?? providers[0]
@@ -40,14 +40,14 @@ function PlatformForm({ data, onSaved }) {
 
   const save = async () => {
     setSaving(true)
-    setMessage(null)
+    setError(null)
     try {
       const next = await adminApi.updateSettings(payload)
       onSaved(next)
       setForm((f) => ({ ...f, platform_model: next.values.platform_model }))
-      setMessage({ ok: true, text: "Saved. New turns use these settings right away." })
+      toast.success("Saved. New turns use these settings right away.")
     } catch (e) {
-      setMessage({ ok: false, text: e.message })
+      setError(e.message)
     } finally {
       setSaving(false)
     }
@@ -55,13 +55,13 @@ function PlatformForm({ data, onSaved }) {
 
   const saveButton = (
     <>
-      {message && <span className={cn("mr-auto text-sm", message.ok ? "text-success" : "text-danger")}>{message.text}</span>}
-      <BrandButton size="sm" disabled={!dirty || saving} onClick={save}>
+      {error && <span className="mr-auto text-sm text-destructive">{error}</span>}
+      <Button size="sm" disabled={!dirty || saving} onClick={save}>
         Save changes
-      </BrandButton>
+      </Button>
     </>
   )
-  const numberInput = (k) => <BrandInput id={k} inputMode="numeric" value={form[k]} onChange={(e) => set(k, e.target.value.replace(/\D/g, ""))} />
+  const numberInput = (k) => <Input id={k} inputMode="numeric" value={form[k]} onChange={(e) => set(k, e.target.value.replace(/\D/g, ""))} />
   const envDefault = (k) => `Server default: ${fmtNumber(defaults[k])}.`
 
   // Key changes save immediately and return the refreshed settings.
@@ -75,38 +75,32 @@ function PlatformForm({ data, onSaved }) {
           <Switch checked={form.platform_enabled} onCheckedChange={(v) => set("platform_enabled", v)} />
         </SettingsRow>
         <div className="py-5">
-          <p className="mb-3 text-ui font-semibold text-brand-navy">Provider</p>
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
-            {providers.map((p) => {
-              const active = p.id === provider.id
-              return (
-                <button
-                  key={p.id}
-                  type="button"
-                  aria-pressed={active}
-                  onClick={() => !active && setForm((f) => ({ ...f, platform_provider: p.id, platform_model: p.default_model }))}
-                  className={cn(
-                    "flex flex-col items-start gap-2 rounded-2xl p-3.5 text-left ring-1 transition-all outline-none focus-visible:ring-4 focus-visible:ring-brand/30",
-                    active ? "bg-secondary ring-2 ring-brand" : "bg-white ring-border hover:scale-[1.02] hover:shadow-lift hover:ring-brand/40"
-                  )}
-                >
-                  <ProviderTile provider={p.id} />
-                  <span className="font-display text-ui font-semibold text-brand-navy">{p.label}</span>
-                  <span className={cn("text-xs font-semibold", keys[p.id] ? "text-success" : "text-brand-subtle")}>{keys[p.id] ? "Key connected" : "No key yet"}</span>
-                </button>
-              )
-            })}
-          </div>
+          <p className="mb-3 text-sm font-medium">Provider</p>
+          <ProviderChoice
+            providers={providers}
+            activeId={provider.id}
+            isConnected={(id) => !!keys[id]}
+            onChoose={(p) => p.id !== provider.id && setForm((f) => ({ ...f, platform_provider: p.id, platform_model: p.default_model }))}
+          />
         </div>
         <SettingsRow label="Model" description={provider.notes || `Any chat model ${provider.label} offers. Server default: ${defaults.platform_model}.`}>
-          <PlatformModelPicker provider={provider} keyStamp={selectedKey?.last4} value={form.platform_model} onChange={(v) => set("platform_model", v)} />
+          <ModelCombobox
+            provider={provider}
+            value={form.platform_model}
+            keyStamp={`platform:${selectedKey?.last4 ?? ""}`}
+            fetchModels={adminApi.platformModels}
+            onSelect={(v) => set("platform_model", v)}
+          />
         </SettingsRow>
         <SettingsRow label="Max output tokens per call" htmlFor="max_tokens" description={envDefault("max_tokens")}>
           {numberInput("max_tokens")}
         </SettingsRow>
         {!selectedKey && (
-          <div className="-mx-card flex items-center gap-2 border-t border-warning-line bg-warning-soft px-card py-3 text-sm text-warning">
-            <Info className="size-4 shrink-0" /> Add a {provider.label} key below, or free generations won't run and everyone will need their own key.
+          <div className="py-5">
+            <Alert variant="warning">
+              <Info />
+              <AlertDescription>Add a {provider.label} key below, or free generations won't run and everyone will need their own key.</AlertDescription>
+            </Alert>
           </div>
         )}
       </SettingsCard>
@@ -114,7 +108,7 @@ function PlatformForm({ data, onSaved }) {
       <SettingsCard
         title="Built-in model keys"
         description="Your keys pay for everyone's free generations. They're encrypted on the server and never shown again after saving. Only the selected provider's key is used."
-        action={<KeyRound className="size-5 text-brand-subtle" />}
+        action={<KeyRound className="size-5 text-muted-foreground" />}
       >
         {providers.map((p) => {
           const k = keys[p.id]
@@ -145,30 +139,5 @@ function PlatformForm({ data, onSaved }) {
         </SettingsRow>
       </SettingsCard>
     </div>
-  )
-}
-
-function PlatformModelPicker({ provider, keyStamp, value, onChange }) {
-  const [open, setOpen] = useState(false)
-  return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger className={cn(fieldVariants(), "flex items-center gap-2 text-left")}>
-        <span className="min-w-0 flex-1 truncate font-medium">{value}</span>
-        <ChevronsUpDown className="size-4 text-brand-subtle" />
-      </PopoverTrigger>
-      <PopoverContent align="end" className="h-80 w-(--radix-popover-trigger-width) min-w-72 rounded-[26px] p-2 shadow-float ring-0">
-        <ModelOptions
-          provider={provider}
-          value={value}
-          keyStamp={`platform:${keyStamp ?? ""}`}
-          fetchModels={adminApi.platformModels}
-          onSelect={(id) => {
-            onChange(id)
-            setOpen(false)
-          }}
-          className="h-full"
-        />
-      </PopoverContent>
-    </Popover>
   )
 }

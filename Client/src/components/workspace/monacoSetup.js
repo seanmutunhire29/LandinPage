@@ -27,19 +27,43 @@ ts?.javascriptDefaults.setCompilerOptions({ jsx: ts.JsxEmit.Preserve, allowJs: t
 
 loader.config({ monaco })
 
-// vs-dark tinted plum to sit inside the brand's deep-purple workspace chrome.
-export const MONACO_THEME = "landinpage-plum"
-monaco.editor.defineTheme(MONACO_THEME, {
+// Neutral light/dark themes matching the app's shadcn tokens (Monaco can't read CSS
+// variables, so the hex values mirror --card, --foreground, --muted-foreground, --accent).
+export const MONACO_THEMES = { light: "landinpage-light", dark: "landinpage-dark" }
+
+monaco.editor.defineTheme(MONACO_THEMES.light, {
+  base: "vs",
+  inherit: true,
+  rules: [],
+  colors: {
+    "editor.background": "#ffffff",
+    "editor.foreground": "#0a0a0a",
+    "editor.lineHighlightBackground": "#f5f5f5",
+    "editor.lineHighlightBorder": "#00000000",
+    "editorLineNumber.foreground": "#a3a3a3",
+    "editorLineNumber.activeForeground": "#0a0a0a",
+    "editor.selectionBackground": "#d4d4d4",
+    "editor.inactiveSelectionBackground": "#e5e5e5",
+    "editorCursor.foreground": "#171717",
+    "editorIndentGuide.background1": "#e5e5e5",
+  },
+})
+
+monaco.editor.defineTheme(MONACO_THEMES.dark, {
   base: "vs-dark",
   inherit: true,
   rules: [],
   colors: {
-    "editor.background": "#2a0548",
-    "editor.lineHighlightBackground": "#3b076480",
-    "editorLineNumber.foreground": "#8b76b0",
-    "editorLineNumber.activeForeground": "#e9d5ff",
-    "editor.selectionBackground": "#a78bfa55",
-    "editorCursor.foreground": "#86efac",
+    "editor.background": "#171717",
+    "editor.foreground": "#fafafa",
+    "editor.lineHighlightBackground": "#262626",
+    "editor.lineHighlightBorder": "#00000000",
+    "editorLineNumber.foreground": "#737373",
+    "editorLineNumber.activeForeground": "#fafafa",
+    "editor.selectionBackground": "#404040",
+    "editor.inactiveSelectionBackground": "#333333",
+    "editorCursor.foreground": "#fafafa",
+    "editorIndentGuide.background1": "#262626",
   },
 })
 

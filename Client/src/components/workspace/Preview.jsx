@@ -2,7 +2,9 @@ import { useLayoutEffect, useRef, useState } from "react"
 import { AlertTriangle, ExternalLink, Monitor, RotateCw, Smartphone, Tablet } from "lucide-react"
 import { useWorkspaceStore } from "@/store/useWorkspaceStore"
 import { reloadPreview } from "@/webcontainer/runtime"
-import { Segmented } from "@/components/brand/segmented"
+import { Button } from "@/components/ui/button"
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils"
 import { BuildProgress } from "./BuildProgress"
 
@@ -63,33 +65,60 @@ export function Preview() {
   const frame = frameFor(device, stage)
 
   return (
-    <div className="flex h-full min-h-0 flex-col bg-white">
-      <div className="flex h-11 shrink-0 items-center gap-2 border-b border-border bg-brand-mist px-2">
-        <button onClick={reloadPreview} disabled={!url} className="grid size-7 place-items-center rounded-full text-brand-muted hover:bg-white disabled:opacity-40" aria-label="Reload preview">
-          <RotateCw className="size-3.5" />
-        </button>
-        <div className="min-w-0 flex-1 truncate rounded-full bg-white px-3 py-1 font-mono text-xs text-brand-muted shadow-clay-sm">
-          {url ?? "localhost"}
+    <div className="flex h-full min-h-0 flex-col bg-background">
+      <TooltipProvider>
+        <div className="flex h-11 shrink-0 items-center gap-2 border-b bg-background px-2">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="ghost" size="icon-sm" onClick={reloadPreview} disabled={!url} aria-label="Reload preview">
+                <RotateCw />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Reload preview</TooltipContent>
+          </Tooltip>
+          <div className="min-w-0 flex-1 truncate rounded-md bg-muted px-3 py-1 font-mono text-xs text-muted-foreground">{url ?? "localhost"}</div>
+          <ToggleGroup
+            type="single"
+            variant="outline"
+            size="sm"
+            spacing={0}
+            value={deviceId}
+            onValueChange={(v) => v && setDeviceId(v)}
+            aria-label="Preview device"
+            className="shrink-0"
+          >
+            {DEVICES.map(({ id, label, Icon }) => (
+              <ToggleGroupItem key={id} value={id} aria-label={label} title={label}>
+                <Icon />
+              </ToggleGroupItem>
+            ))}
+          </ToggleGroup>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button asChild variant="ghost" size="icon-sm">
+                <a
+                  href={url ?? undefined}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="aria-disabled:pointer-events-none aria-disabled:opacity-50"
+                  aria-disabled={!url}
+                  aria-label="Open preview in new tab"
+                >
+                  <ExternalLink />
+                </a>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Open preview in new tab</TooltipContent>
+          </Tooltip>
         </div>
-        <Segmented options={DEVICES} value={deviceId} onChange={setDeviceId} label="Preview device" iconOnly className="shrink-0" />
-        <a
-          href={url ?? undefined}
-          target="_blank"
-          rel="noreferrer"
-          className="grid size-7 place-items-center rounded-full text-brand-muted hover:bg-white aria-disabled:pointer-events-none aria-disabled:opacity-40"
-          aria-disabled={!url}
-          aria-label="Open preview in new tab"
-        >
-          <ExternalLink className="size-3.5" />
-        </a>
-      </div>
-      <div ref={stageRef} className={cn("relative min-h-0 flex-1 overflow-hidden", framed && "bg-brand-mist")}>
+      </TooltipProvider>
+      <div ref={stageRef} className={cn("relative min-h-0 flex-1 overflow-hidden", framed && "bg-muted/50")}>
         {url && (
           <div className={cn("flex size-full flex-col items-center", framed && "justify-center gap-2")}>
             <div
               className={cn(
-                "relative shrink-0 overflow-hidden bg-white transition-[width,height,border-radius] duration-450 ease-spring",
-                framed && "shadow-clay ring-[6px] ring-brand-navy"
+                "relative shrink-0 overflow-hidden bg-background transition-[width,height,border-radius] duration-300 ease-out",
+                framed && "border shadow-sm"
               )}
               style={{
                 width: frame.width * frame.scale,
@@ -107,7 +136,7 @@ export function Preview() {
               />
             </div>
             {framed && (
-              <p className="h-5 font-mono text-xs text-brand-subtle">
+              <p className="h-5 font-mono text-xs text-muted-foreground">
                 {device.width} × {device.height}
                 {frame.scale < 1 && ` · ${Math.round(frame.scale * 100)}%`}
               </p>
@@ -115,11 +144,11 @@ export function Preview() {
           </div>
         )}
         {!url && (
-          <div className="absolute inset-0 grid place-items-center overflow-y-auto bg-brand-mist p-6 text-center">
+          <div className="absolute inset-0 grid place-items-center overflow-y-auto bg-muted/50 p-6 text-center">
             {runtime.status === "error" ? (
-              <div className="flex max-w-sm flex-col items-center gap-2 text-sm text-brand-muted">
-                <AlertTriangle className="size-6 text-brand-red" />
-                <p className="font-semibold text-brand-navy">Preview unavailable</p>
+              <div className="flex max-w-sm flex-col items-center gap-2 text-sm text-muted-foreground">
+                <AlertTriangle className="size-6 text-destructive" />
+                <p className="font-semibold text-foreground">Preview unavailable</p>
                 <p>{runtime.error}</p>
               </div>
             ) : (

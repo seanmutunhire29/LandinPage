@@ -3,6 +3,8 @@ import { Link, useNavigate } from "react-router-dom"
 import { AlertTriangle, Loader2 } from "lucide-react"
 import { useAuthStore } from "@/store/useAuthStore"
 import { createPendingProject, peekPending } from "@/lib/pendingProject"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { Button } from "@/components/ui/button"
 
 /**
  * OAuth and email-confirmation links land here. supabase-js exchanges the code
@@ -29,22 +31,21 @@ export default function AuthCallback() {
   }, [ready, user, error, navigate])
 
   return (
-    <div className="grid h-svh place-items-center bg-brand-mist p-6">
+    <div className="grid h-svh place-items-center bg-background p-6">
       {error ? (
-        <div className="flex max-w-sm flex-col items-center gap-3 text-center">
-          <AlertTriangle className="size-8 text-brand-red" />
-          <p className="font-display text-lg font-semibold text-brand-navy">Something went wrong</p>
-          <p className="text-sm text-brand-muted">{error}</p>
-          <Link
-            to={peekPending() ? "/onboarding/review" : "/profile"}
-            className="mt-2 rounded-full bg-brand px-5 py-2 text-sm font-bold text-brand-navy shadow-brand-sm transition-transform duration-200 ease-spring hover:scale-[1.03] active:scale-95"
-          >
-            {peekPending() ? "Back to your project" : "Try again"}
-          </Link>
+        <div className="flex w-full max-w-sm flex-col items-center gap-4">
+          <Alert variant="destructive">
+            <AlertTriangle />
+            <AlertTitle>Something went wrong</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+          <Button asChild>
+            <Link to={peekPending() ? "/onboarding/review" : "/profile"}>{peekPending() ? "Back to your project" : "Try again"}</Link>
+          </Button>
         </div>
       ) : (
-        <div className="flex flex-col items-center gap-3 text-sm text-brand-muted">
-          <Loader2 className="size-6 animate-spin text-brand-dark" />
+        <div className="flex flex-col items-center gap-3 text-sm text-muted-foreground">
+          <Loader2 className="size-6 animate-spin text-muted-foreground" />
           Signing you in...
         </div>
       )}

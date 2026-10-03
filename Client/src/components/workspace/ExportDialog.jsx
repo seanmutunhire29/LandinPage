@@ -1,15 +1,17 @@
 import { useMemo, useState } from "react"
-import { Download, FolderOpen, Loader2 } from "lucide-react"
+import { AlertCircle, Download, FolderOpen, Loader2 } from "lucide-react"
 import { useWorkspaceStore } from "@/store/useWorkspaceStore"
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Checkbox } from "@/components/ui/checkbox"
-import { BrandButton } from "@/components/brand/button"
+import { Label } from "@/components/ui/label"
+import { Button } from "@/components/ui/button"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import { buildTree } from "@/lib/fileTree"
 import { FileIcon } from "./FileIcon"
 import { downloadZip } from "@/lib/exportZip"
 
 const INDENT = 16
-const row = "flex h-8 w-full cursor-pointer items-center gap-2 rounded-lg pr-2 text-left transition-colors hover:bg-muted"
+const row = "h-8 w-full cursor-pointer rounded-md pr-2 text-left font-normal transition-colors hover:bg-accent/50"
 
 const descendants = (node) => [...node.files, ...Object.values(node.dirs).flatMap(descendants)]
 
@@ -28,14 +30,14 @@ function Dir({ node, depth, selected, setMany }) {
           const state = count === 0 ? false : count === all.length ? true : "indeterminate"
           return (
             <div key={child.path} role="treeitem" aria-expanded>
-              <label className={row} style={{ paddingLeft: pad }}>
+              <Label className={row} style={{ paddingLeft: pad }}>
                 <Checkbox checked={state} onCheckedChange={() => setMany(all, state !== true)} aria-label={`Include ${child.path}`} />
-                <FolderOpen className="size-3.5 shrink-0 text-brand-subtle" />
-                <span className="truncate font-medium text-brand-navy">{name}</span>
-                <span className="ml-auto shrink-0 text-xs text-brand-subtle tabular-nums">
+                <FolderOpen className="size-3.5 shrink-0 text-muted-foreground" />
+                <span className="truncate font-medium text-foreground">{name}</span>
+                <span className="ml-auto shrink-0 text-xs text-muted-foreground tabular-nums">
                   {count}/{all.length}
                 </span>
-              </label>
+              </Label>
               <div role="group">
                 <Dir node={child} depth={depth + 1} selected={selected} setMany={setMany} />
               </div>
@@ -43,11 +45,11 @@ function Dir({ node, depth, selected, setMany }) {
           )
         })}
       {node.files.sort().map((path) => (
-        <label key={path} role="treeitem" className={row} style={{ paddingLeft: pad }} title={path}>
+        <Label key={path} role="treeitem" className={row} style={{ paddingLeft: pad }} title={path}>
           <Checkbox checked={selected.has(path)} onCheckedChange={(v) => setMany([path], v === true)} aria-label={`Include ${path}`} />
-          <FileIcon path={path} className="text-brand-muted" />
-          <span className="truncate text-brand-body">{path.split("/").pop()}</span>
-        </label>
+          <FileIcon path={path} />
+          <span className="truncate text-foreground">{path.split("/").pop()}</span>
+        </Label>
       ))}
     </>
   )
@@ -101,46 +103,51 @@ export function ExportDialog({ open, onOpenChange }) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg rounded-[39px] p-7 shadow-float ring-0">
+      <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle>Download project</DialogTitle>
           <DialogDescription>
-            Choose the files to include. Unzip, run <code className="rounded-md bg-muted px-1 py-px font-mono text-xs text-brand-navy">npm install</code>, and keep building in any editor.
+            Choose the files to include. Unzip, run <code className="rounded-md bg-muted px-1 py-px font-mono text-xs text-foreground">npm install</code>, and keep building in any editor.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="overflow-hidden rounded-2xl shadow-clay-sm">
-          <div className="flex items-center gap-3 border-b border-border bg-brand-mist px-3 py-2 text-xs">
-            <span className="mr-auto text-brand-muted tabular-nums">
+        <div className="min-w-0 overflow-hidden rounded-lg border">
+          <div className="flex items-center gap-1 border-b bg-muted/50 py-1 pr-1 pl-3 text-xs">
+            <span className="mr-auto text-muted-foreground tabular-nums">
               {chosen.length} of {paths.length} files · {formatSize(size)}
             </span>
-            <button onClick={() => setSelected(new Set(paths))} className="font-medium text-brand-dark hover:underline">
+            <Button variant="ghost" size="xs" onClick={() => setSelected(new Set(paths))}>
               Select all
-            </button>
-            <button onClick={() => setSelected(new Set())} className="font-medium text-brand-muted hover:text-brand-navy hover:underline">
+            </Button>
+            <Button variant="ghost" size="xs" className="text-muted-foreground" onClick={() => setSelected(new Set())}>
               Clear
-            </button>
+            </Button>
           </div>
           <div role="tree" aria-label="Files to download" className="max-h-80 overflow-y-auto p-1 font-mono text-sm">
             {paths.length ? (
               <Dir node={tree} depth={0} selected={selected} setMany={setMany} />
             ) : (
-              <p className="py-8 text-center font-sans text-sm text-brand-subtle">This project has no files yet.</p>
+              <p className="py-8 text-center font-sans text-sm text-muted-foreground">This project has no files yet.</p>
             )}
           </div>
         </div>
 
-        {error && <p className="text-sm text-destructive">Couldn't create the zip: {error}</p>}
+        {error && (
+          <Alert variant="destructive">
+            <AlertCircle />
+            <AlertDescription>Couldn't create the zip: {error}</AlertDescription>
+          </Alert>
+        )}
 
-        <div className="flex justify-end gap-2">
-          <BrandButton variant="outline" onClick={() => onOpenChange(false)}>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
-          </BrandButton>
-          <BrandButton onClick={download} disabled={!chosen.length || busy}>
+          </Button>
+          <Button onClick={download} disabled={!chosen.length || busy}>
             {busy ? <Loader2 className="animate-spin" /> : <Download />}
             Download .zip
-          </BrandButton>
-        </div>
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   )

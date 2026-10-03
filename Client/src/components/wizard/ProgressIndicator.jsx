@@ -5,48 +5,48 @@ import { useDesignStore } from "@/store/useDesignStore"
 import { canVisit, isStageComplete } from "@/lib/progress"
 import { cn } from "@/lib/utils"
 
+/** Segmented step indicator; reachable stages are links. */
 export function ProgressIndicator({ currentIndex }) {
   const state = useDesignStore()
   const total = STAGES.length
   const remaining = total - currentIndex - 1
 
   return (
-    <nav aria-label="Onboarding progress" className="w-full">
-      <div className="mb-2 flex items-baseline justify-between text-sm">
-        <span className="font-display font-semibold text-brand-navy">
+    <nav aria-label="Onboarding progress" className="w-full min-w-0">
+      <div className="mb-2 flex items-baseline justify-between gap-3 text-sm">
+        <span className="min-w-0 truncate font-medium text-foreground">
           Step {currentIndex + 1} of {total}
-          <span className="font-normal text-brand-muted"> · {STAGES[currentIndex].label}</span>
+          <span className="font-normal text-muted-foreground"> · {STAGES[currentIndex].label}</span>
         </span>
-        <span className="text-brand-muted">{remaining === 0 ? "Last step" : `${remaining} to go`}</span>
+        <span className="shrink-0 text-muted-foreground">{remaining === 0 ? "Last step" : `${remaining} to go`}</span>
       </div>
-      <ol className="flex gap-1.5">
+      <ol className="flex gap-1">
         {STAGES.map((stage, i) => {
           const done = i < currentIndex || (i !== currentIndex && isStageComplete(stage.id, state) && canVisit(i, state))
           const reachable = canVisit(i, state)
           const current = i === currentIndex
           const segment = (
             <>
-              <span
-                className={cn(
-                  "block h-2.5 rounded-full transition-colors duration-450",
-                  current ? "bg-brand shadow-brand-sm" : done ? "bg-brand/50" : "bg-brand-fill shadow-clay-inset"
-                )}
-              />
+              <span className={cn("block h-1.5 rounded-full transition-colors", current || done ? "bg-primary" : "bg-muted")} />
               <span
                 className={cn(
                   "mt-1.5 hidden items-center gap-1 text-xs lg:flex",
-                  current ? "font-semibold text-brand-navy" : "text-brand-muted"
+                  current ? "font-medium text-foreground" : "text-muted-foreground"
                 )}
               >
-                {done && !current && <Check className="size-3 text-brand-dark" strokeWidth={3} />}
+                {done && !current && <Check className="size-3" strokeWidth={3} />}
                 {stage.label}
               </span>
             </>
           )
           return (
-            <li key={stage.id} className="flex-1">
+            <li key={stage.id} className="min-w-0 flex-1">
               {reachable && !current ? (
-                <Link to={stage.path} className="block rounded outline-none focus-visible:ring-2 focus-visible:ring-brand" aria-label={`Go to ${stage.label}`}>
+                <Link
+                  to={stage.path}
+                  className="block rounded-sm outline-none hover:opacity-80 focus-visible:ring-3 focus-visible:ring-ring/50"
+                  aria-label={`Go to ${stage.label}`}
+                >
                   {segment}
                 </Link>
               ) : (

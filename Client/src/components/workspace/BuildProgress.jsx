@@ -1,5 +1,6 @@
 import { Check, Loader2 } from "lucide-react"
 import { useWorkspaceStore } from "@/store/useWorkspaceStore"
+import { Progress } from "@/components/ui/progress"
 import { cn } from "@/lib/utils"
 
 const INSTALL = /\b(npm|pnpm|yarn)\s+(i|install|add)\b/
@@ -55,37 +56,38 @@ function useBuildSteps() {
   ].filter(Boolean)
 }
 
-/** A landing-page wireframe that fills in with brand color as the build advances. */
+/** A landing-page wireframe that fills in as the build advances. */
 function Wireframe({ progress }) {
   const on = (at) => progress >= at
   const block = (at, fill, cls) => (
-    <div className={cn("rounded-[3px] transition-all duration-700 ease-out", on(at) ? fill : "bg-muted", cls)} />
+    <div className={cn("rounded-sm transition-colors duration-700 ease-out", on(at) ? fill : "bg-muted", cls)} />
   )
   return (
-    <div className="w-60 rounded-[26px] bg-white p-3 shadow-clay" aria-hidden>
+    <div className="w-60 rounded-xl border bg-card p-3 shadow-sm" aria-hidden>
       <div className="flex items-center gap-1.5">
-        {block(0.1, "bg-brand", "size-2.5 rounded-full")}
-        {block(0.1, "bg-brand-navy/70", "h-1.5 w-10")}
+        {block(0.1, "bg-primary", "size-2.5 rounded-full")}
+        {block(0.1, "bg-foreground/70", "h-1.5 w-10")}
         <div className="ml-auto flex gap-1">
-          {block(0.2, "bg-input", "h-1.5 w-5")}
-          {block(0.2, "bg-input", "h-1.5 w-5")}
+          {block(0.2, "bg-muted-foreground/40", "h-1.5 w-5")}
+          {block(0.2, "bg-muted-foreground/40", "h-1.5 w-5")}
         </div>
       </div>
       <div className="mt-4 flex flex-col items-center gap-1.5">
-        {block(0.3, "bg-brand-navy", "h-2.5 w-36")}
-        {block(0.35, "bg-brand-navy", "h-2.5 w-24")}
-        {block(0.45, "bg-input", "mt-1 h-1.5 w-32")}
-        {block(0.55, "bg-brand shadow-brand-sm", "mt-2 h-4 w-16 rounded-md")}
+        {block(0.3, "bg-foreground", "h-2.5 w-36")}
+        {block(0.35, "bg-foreground", "h-2.5 w-24")}
+        {block(0.45, "bg-muted-foreground/40", "mt-1 h-1.5 w-32")}
+        {block(0.55, "bg-primary", "mt-2 h-4 w-16 rounded-md")}
       </div>
       <div className="mt-4 grid grid-cols-3 gap-1.5">
-        {block(0.65, "bg-brand-yellow/70", "h-10")}
-        {block(0.75, "bg-brand-red/60", "h-10")}
-        {block(0.85, "bg-brand-green/60", "h-10")}
+        {block(0.65, "bg-accent border", "h-10")}
+        {block(0.75, "bg-accent border", "h-10")}
+        {block(0.85, "bg-accent border", "h-10")}
       </div>
     </div>
   )
 }
 
+/** Build checklist and wireframe shown in the preview pane until the dev server is up. */
 export function BuildProgress() {
   const steps = useBuildSteps()
   const current = steps.findLast((s) => s.state === "active")
@@ -97,28 +99,26 @@ export function BuildProgress() {
     <div className="flex w-full max-w-xs flex-col items-center gap-6">
       <Wireframe progress={progress} />
       <div className="w-full text-center" aria-live="polite">
-        <p className="font-display text-base font-semibold text-brand-navy">{current?.label ?? (finished ? "Opening the preview" : "Waiting for project files")}</p>
-        <p className="mt-0.5 truncate text-xs text-brand-muted">{current?.detail ?? (finished ? "Almost there" : "The agent will start writing shortly")}</p>
-        <div className="mt-3 h-1 overflow-hidden rounded-full bg-muted">
-          <div className="h-full rounded-full bg-brand transition-[width] duration-700 ease-out" style={{ width: `${Math.max(progress, 0.04) * 100}%` }} />
-        </div>
+        <p className="text-base font-semibold text-foreground">{current?.label ?? (finished ? "Opening the preview" : "Waiting for project files")}</p>
+        <p className="mt-0.5 truncate text-xs text-muted-foreground">{current?.detail ?? (finished ? "Almost there" : "The agent will start writing shortly")}</p>
+        <Progress value={Math.max(progress, 0.04) * 100} className="mt-3 [&>[data-slot=progress-indicator]]:duration-700" />
       </div>
       <ol className="flex w-full flex-col gap-2">
         {steps.map((s) => (
-          <li key={s.id} className={cn("flex items-center gap-2.5 text-sm transition-colors", s.state === "upcoming" ? "text-brand-subtle" : "text-brand-navy")}>
+          <li key={s.id} className={cn("flex items-center gap-2.5 text-sm transition-colors", s.state === "upcoming" ? "text-muted-foreground" : "text-foreground")}>
             <span
               className={cn(
                 "grid size-5 shrink-0 place-items-center rounded-full transition-colors",
-                s.state === "done" && "bg-brand-green/15 text-success",
-                s.state === "active" && "bg-brand/12 text-brand-dark",
-                s.state === "upcoming" && "ring-1 ring-input ring-inset"
+                s.state === "done" && "bg-success/10 text-success",
+                s.state === "active" && "bg-muted text-foreground",
+                s.state === "upcoming" && "border"
               )}
             >
               {s.state === "done" && <Check className="size-3" strokeWidth={3} />}
               {s.state === "active" && <Loader2 className="size-3 animate-spin" strokeWidth={2.5} />}
             </span>
-            <span className={cn("shrink-0", s.state === "active" && "font-semibold")}>{s.label}</span>
-            {s.state === "active" && s !== current && <span className="ml-auto min-w-0 truncate text-xs text-brand-muted">{s.detail}</span>}
+            <span className={cn("shrink-0", s.state === "active" && "font-medium")}>{s.label}</span>
+            {s.state === "active" && s !== current && <span className="ml-auto min-w-0 truncate text-xs text-muted-foreground">{s.detail}</span>}
           </li>
         ))}
       </ol>

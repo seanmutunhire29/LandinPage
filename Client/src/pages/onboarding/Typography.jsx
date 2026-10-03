@@ -9,24 +9,25 @@ import { OptionCard, OptionGrid } from "@/components/wizard/OptionCard"
 import { WizardNav } from "@/components/wizard/WizardNav"
 import { useStageNav } from "@/components/wizard/useStageNav"
 
+/** Specimen for a type pairing; fonts are the pairing's own, chrome uses app tokens. */
 function PairingPreview({ pairing }) {
   const heading = { fontFamily: fontStack(pairing.heading.family, pairing.heading.fallback), fontWeight: pairing.heading.weight }
   const body = { fontFamily: fontStack(pairing.body.family, pairing.body.fallback), fontWeight: pairing.body.weight }
   return (
-    <div className="flex h-52 flex-col justify-between border-b border-border bg-brand-mist p-5 text-brand-navy">
+    <div className="flex h-52 flex-col justify-between bg-muted/50 p-5 text-foreground">
       <div className="flex items-start justify-between gap-3">
         <p className="text-5xl leading-none" style={heading}>Aa</p>
         <ul className="flex items-end gap-1.5" aria-label="Type scale">
           {SCALE_STEPS.map((step) => (
             <li key={step} className="flex flex-col items-center gap-1" title={`${step}: ${pairing.scale[step]}px`}>
-              <span className="w-1.5 rounded-full bg-brand/60" style={{ height: pairing.scale[step] * 0.5 }} />
+              <span className="w-1.5 rounded-full bg-primary/60" style={{ height: pairing.scale[step] * 0.5 }} />
             </li>
           ))}
         </ul>
       </div>
       <div>
         <p className="text-[22px] leading-tight" style={heading}>Design with intent</p>
-        <p className="mt-1.5 line-clamp-2 text-sm leading-relaxed text-brand-body" style={body}>
+        <p className="mt-1.5 line-clamp-2 text-sm leading-relaxed text-muted-foreground" style={body}>
           Every page starts with a decision. This is the body face at reading size, set for long-form copy.
         </p>
       </div>

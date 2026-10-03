@@ -1,17 +1,21 @@
 import { Link } from "react-router-dom"
 import { Logo } from "@/components/marketing/Logo"
 import { UserMenu } from "@/components/auth/UserMenu"
+import { ModeToggle } from "@/components/mode-toggle"
 import { cn } from "@/lib/utils"
 
-/** Top bar for the account pages: wordmark on the left, account menu on the right. */
+/** Top bar for the account pages: wordmark on the left, theme toggle and account menu on the right. */
 export function AppHeader({ className }) {
   return (
-    <header className="sticky top-0 z-40 bg-white/90 shadow-[0_12px_30px_-20px_rgb(59_7_100/0.4)] backdrop-blur">
-      <div className={cn("mx-auto flex max-w-5xl items-center justify-between px-gutter py-3 md:px-gutter-md", className)}>
-        <Link to="/" aria-label="LandinPage home">
+    <header className="sticky top-0 z-40 border-b bg-background/80 backdrop-blur">
+      <div className={cn("mx-auto flex h-14 max-w-5xl items-center justify-between gap-4 px-4 md:px-6", className)}>
+        <Link to="/" aria-label="LandinPage home" className="shrink-0">
           <Logo />
         </Link>
-        <UserMenu />
+        <div className="flex items-center gap-2">
+          <ModeToggle />
+          <UserMenu />
+        </div>
       </div>
     </header>
   )

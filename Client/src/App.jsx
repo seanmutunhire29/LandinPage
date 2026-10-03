@@ -17,6 +17,8 @@ import { AnnouncementBanner } from "@/components/AnnouncementBanner"
 import AuthCallback from "@/pages/AuthCallback"
 import Profile from "@/pages/Profile"
 import Settings from "@/pages/Settings"
+import { ThemeProvider } from "@/components/theme-provider"
+import { Toaster } from "@/components/ui/sonner"
 
 // Monaco + WebContainer code only loads when a project is opened.
 const Workspace = lazy(() => import("@/pages/Workspace"))
@@ -25,7 +27,7 @@ const Admin = lazy(() => import("@/pages/Admin"))
 function AdminRoute({ view }) {
   return (
     <RequireAdmin>
-      <Suspense fallback={<div className="h-svh bg-brand-mist" />}>
+      <Suspense fallback={<div className="h-svh bg-background" />}>
         <Admin view={view} />
       </Suspense>
     </RequireAdmin>
@@ -34,59 +36,62 @@ function AdminRoute({ view }) {
 
 export default function App() {
   return (
-    <BrowserRouter>
-      <ScrollToTop />
-      <AnnouncementBanner />
-      <Routes>
-        <Route path="/" element={<Marketing />} />
-        <Route path="/onboarding" element={<WizardLayout />}>
-          <Route index element={<Navigate to="direction" replace />} />
-          <Route path="direction" element={<Direction />} />
-          <Route path="typography" element={<Typography />} />
-          <Route path="color" element={<Color />} />
-          <Route path="surface" element={<Surface />} />
-          <Route path="components" element={<Components />} />
-          <Route path="layout" element={<Layout />} />
-          <Route path="motion" element={<Motion />} />
-          <Route path="review" element={<Review />} />
-        </Route>
-        <Route path="/auth/callback" element={<AuthCallback />} />
-        <Route path="/projects" element={<Navigate to="/profile" replace />} />
-        <Route
-          path="/profile"
-          element={
-            <RequireAuth>
-              <Profile />
-            </RequireAuth>
-          }
-        />
-        <Route path="/settings" element={<Navigate to="/settings/profile" replace />} />
-        <Route
-          path="/settings/:section"
-          element={
-            <RequireAuth>
-              <Settings />
-            </RequireAuth>
-          }
-        />
-        {/* Direct sign-in link: the profile page shows sign-in when logged out. */}
-        <Route path="/login" element={<Navigate to="/profile" replace />} />
-        <Route
-          path="/projects/:projectId"
-          element={
-            <RequireAuth>
-              <Suspense fallback={<div className="h-svh bg-brand-mist" />}>
-                <Workspace />
-              </Suspense>
-            </RequireAuth>
-          }
-        />
-        <Route path="/admin" element={<Navigate to="/admin/overview" replace />} />
-        <Route path="/admin/users/:userId" element={<AdminRoute view="user" />} />
-        <Route path="/admin/projects/:projectId" element={<AdminRoute view="project" />} />
-        <Route path="/admin/:section" element={<AdminRoute />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </BrowserRouter>
+    <ThemeProvider>
+      <BrowserRouter>
+        <ScrollToTop />
+        <AnnouncementBanner />
+        <Routes>
+          <Route path="/" element={<Marketing />} />
+          <Route path="/onboarding" element={<WizardLayout />}>
+            <Route index element={<Navigate to="direction" replace />} />
+            <Route path="direction" element={<Direction />} />
+            <Route path="typography" element={<Typography />} />
+            <Route path="color" element={<Color />} />
+            <Route path="surface" element={<Surface />} />
+            <Route path="components" element={<Components />} />
+            <Route path="layout" element={<Layout />} />
+            <Route path="motion" element={<Motion />} />
+            <Route path="review" element={<Review />} />
+          </Route>
+          <Route path="/auth/callback" element={<AuthCallback />} />
+          <Route path="/projects" element={<Navigate to="/profile" replace />} />
+          <Route
+            path="/profile"
+            element={
+              <RequireAuth>
+                <Profile />
+              </RequireAuth>
+            }
+          />
+          <Route path="/settings" element={<Navigate to="/settings/profile" replace />} />
+          <Route
+            path="/settings/:section"
+            element={
+              <RequireAuth>
+                <Settings />
+              </RequireAuth>
+            }
+          />
+          {/* Direct sign-in link: the profile page shows sign-in when logged out. */}
+          <Route path="/login" element={<Navigate to="/profile" replace />} />
+          <Route
+            path="/projects/:projectId"
+            element={
+              <RequireAuth>
+                <Suspense fallback={<div className="h-svh bg-background" />}>
+                  <Workspace />
+                </Suspense>
+              </RequireAuth>
+            }
+          />
+          <Route path="/admin" element={<Navigate to="/admin/overview" replace />} />
+          <Route path="/admin/users/:userId" element={<AdminRoute view="user" />} />
+          <Route path="/admin/projects/:projectId" element={<AdminRoute view="project" />} />
+          <Route path="/admin/:section" element={<AdminRoute />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+        <Toaster />
+      </BrowserRouter>
+    </ThemeProvider>
   )
 }

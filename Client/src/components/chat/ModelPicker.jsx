@@ -5,8 +5,8 @@ import { hasKey, providerById, useAccountStore } from "@/store/useAccountStore"
 import { ProviderTile } from "@/components/account/UserAvatar"
 import { ModelOptions } from "@/components/settings/ModelOptions"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { shortModel } from "@/lib/providers"
-import { cn } from "@/lib/utils"
 
 /** Compact provider/model switcher for the chat box. Changes the account-wide default. */
 export function ModelPicker() {
@@ -30,52 +30,46 @@ export function ModelPicker() {
       }}
     >
       <PopoverTrigger
-        className="inline-flex h-7 max-w-44 min-w-0 items-center gap-1.5 rounded-full px-2 text-xs font-medium text-brand-body transition-colors outline-none hover:bg-muted focus-visible:ring-4 focus-visible:ring-brand/30 aria-expanded:bg-muted"
+        className="inline-flex h-7 max-w-44 min-w-0 items-center gap-1.5 rounded-md px-2 text-xs font-medium text-muted-foreground transition-colors outline-none hover:bg-accent hover:text-accent-foreground focus-visible:ring-3 focus-visible:ring-ring/50 aria-expanded:bg-accent aria-expanded:text-accent-foreground"
         aria-label={`Model: ${current?.label} ${settings.model}`}
       >
         <ProviderTile provider={settings.provider} className="size-4.5 rounded text-[9px]" />
         <span className="truncate">{shortModel(settings.model)}</span>
-        <ChevronDown className="size-3 shrink-0 text-brand-subtle" />
+        <ChevronDown className="size-3 shrink-0 text-muted-foreground" />
       </PopoverTrigger>
-      <PopoverContent side="top" align="start" className="h-[26rem] w-80 gap-2 rounded-[26px] p-2 shadow-float ring-0">
-        <div className="flex gap-1 border-b border-border px-0.5 pb-2" role="tablist" aria-label="Provider">
-          {providers.map((p) => (
-            <button
-              key={p.id}
-              role="tab"
-              aria-selected={p.id === shown.id}
-              title={p.label}
-              onClick={() => setViewing(p.id)}
-              className={cn(
-                "relative flex flex-1 flex-col items-center gap-1 rounded-lg py-1.5 text-xs font-semibold transition-colors",
-                p.id === shown.id ? "bg-secondary text-brand-navy" : "text-brand-subtle hover:bg-brand-mist"
-              )}
-            >
-              <ProviderTile provider={p.id} className="size-6 rounded-md text-xs" />
-              {p.label}
-              {hasKey(settings, p.id) && <span className="absolute top-1 right-1.5 size-1.5 rounded-full bg-brand-green" aria-label="key connected" />}
-            </button>
-          ))}
-        </div>
-        {!shownKey && (
-          <Link
-            to="/settings/models"
-            className="mx-0.5 flex items-center gap-2 rounded-lg bg-warning-soft px-2 py-1.5 text-xs text-warning ring-1 ring-warning-line hover:bg-warning-line/50"
-          >
-            <KeyRound className="size-3.5 shrink-0" /> No {shown.label} key yet. <span className="font-semibold underline">Add key</span>
-          </Link>
-        )}
-        <ModelOptions
-          key={shown.id}
-          provider={shown}
-          value={shown.id === settings.provider ? settings.model : null}
-          keyStamp={shownKey?.updated_at}
-          onSelect={(model) => {
-            selectModel(shown.id, model).catch(() => {})
-            setOpen(false)
-          }}
-          className="min-h-0 flex-1"
-        />
+      <PopoverContent side="top" align="start" className="flex h-[26rem] w-80 flex-col gap-2 p-2">
+        <Tabs value={shown.id} onValueChange={setViewing} className="min-h-0 flex-1">
+          <TabsList aria-label="Provider" className="w-full group-data-horizontal/tabs:h-auto">
+            {providers.map((p) => (
+              <TabsTrigger key={p.id} value={p.id} title={p.label} className="flex-col gap-1 py-1.5 text-xs">
+                <ProviderTile provider={p.id} className="size-6 rounded-md text-xs" />
+                {p.label}
+                {hasKey(settings, p.id) && <span className="absolute top-1 right-1.5 size-1.5 rounded-full bg-success" aria-label="key connected" />}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+          <TabsContent value={shown.id} className="flex min-h-0 flex-col gap-2">
+            {!shownKey && (
+              <Link
+                to="/settings/models"
+                className="flex items-center gap-2 rounded-md border bg-card px-2 py-1.5 text-xs text-warning transition-colors outline-none hover:bg-accent/50 focus-visible:ring-3 focus-visible:ring-ring/50"
+              >
+                <KeyRound className="size-3.5 shrink-0" /> No {shown.label} key yet. <span className="font-medium underline">Add key</span>
+              </Link>
+            )}
+            <ModelOptions
+              key={shown.id}
+              provider={shown}
+              value={shown.id === settings.provider ? settings.model : null}
+              keyStamp={shownKey?.updated_at}
+              onSelect={(model) => {
+                selectModel(shown.id, model).catch(() => {})
+                setOpen(false)
+              }}
+              className="min-h-0 flex-1"
+            />
+          </TabsContent>
+        </Tabs>
       </PopoverContent>
     </Popover>
   )

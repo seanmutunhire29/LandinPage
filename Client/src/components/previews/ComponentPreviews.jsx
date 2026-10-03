@@ -29,7 +29,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Progress } from "@/components/ui/progress"
 import { Skeleton } from "@/components/ui/skeleton"
-import { useScopedTheme, usePortalStyle } from "@/components/wizard/ThemeScope"
+import { useScopedTheme, usePortalProps } from "@/components/wizard/ThemeScope"
 import { onColor, rgba } from "@/lib/color"
 import { cn } from "@/lib/utils"
 
@@ -518,7 +518,7 @@ function AvatarsPreview({ variant }) {
 /* ----------------------------- Tooltips / popovers ---------------------------- */
 
 function TooltipsPreview({ variant }) {
-  const portal = usePortalStyle()
+  const portal = usePortalProps()
   const trigger = (label) => (
     <Button variant="outline" className="border-foreground/30 bg-transparent">{label}</Button>
   )
@@ -527,14 +527,14 @@ function TooltipsPreview({ variant }) {
       return (
         <Tooltip>
           <TooltipTrigger asChild>{trigger("Hover me")}</TooltipTrigger>
-          <TooltipContent sideOffset={6} style={portal} className="[&_svg]:hidden">Copied to clipboard</TooltipContent>
+          <TooltipContent sideOffset={6} {...portal} className="[&_svg]:hidden">Copied to clipboard</TooltipContent>
         </Tooltip>
       )
     case "light-popover":
       return (
         <Popover>
           <PopoverTrigger asChild>{trigger("Click me")}</PopoverTrigger>
-          <PopoverContent style={portal} className="w-60 border border-border shadow-lg">
+          <PopoverContent {...portal} className="w-60 border border-border shadow-lg">
             <PopoverHeader>
               <PopoverTitle>Usage-based pricing</PopoverTitle>
               <PopoverDescription>Pay only for what you use. Cancel any time.</PopoverDescription>
@@ -548,7 +548,7 @@ function TooltipsPreview({ variant }) {
           <TooltipTrigger asChild>{trigger("Hover me")}</TooltipTrigger>
           <TooltipContent
             sideOffset={8}
-            style={portal}
+            {...portal}
             className="bg-primary px-3.5 py-2 text-sm text-primary-foreground [&_svg]:bg-primary [&_svg]:fill-primary"
           >
             <Sparkles className="size-3.5" /> New: AI suggestions

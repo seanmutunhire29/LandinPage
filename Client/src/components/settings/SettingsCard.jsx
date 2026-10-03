@@ -1,31 +1,30 @@
-import { surfaceVariants } from "@/components/brand/surface"
+import { Card, CardAction, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils"
 
 export function SettingsHeader({ title, description }) {
   return (
-    <div className="mb-8">
-      <h1 className="font-display text-4xl leading-tight font-semibold text-brand-navy">{title}</h1>
-      {description && <p className="mt-2 text-lg leading-relaxed text-brand-body">{description}</p>}
+    <div className="mb-6 md:mb-8">
+      <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">{title}</h1>
+      {description && <p className="mt-1.5 text-muted-foreground">{description}</p>}
     </div>
   )
 }
 
-/** A white section card. Rows inside are divided by hairlines; `footer` renders a mist action bar. */
+/** A section card. Rows inside are divided by hairlines; `footer` renders a muted action bar. */
 export function SettingsCard({ title, description, action, footer, children, className }) {
   return (
-    <section className={cn(surfaceVariants(), "overflow-hidden", className)}>
+    <Card className={cn("gap-0 py-0", className)}>
       {(title || action) && (
-        <div className="flex items-start justify-between gap-4 px-card pt-card">
-          <div className="min-w-0">
-            <h2 className="font-display text-xl font-semibold text-brand-navy">{title}</h2>
-            {description && <p className="mt-1 text-sm text-brand-muted">{description}</p>}
-          </div>
-          {action}
-        </div>
+        <CardHeader className="pt-5">
+          {title && <CardTitle className="text-lg font-semibold">{title}</CardTitle>}
+          {description && <CardDescription>{description}</CardDescription>}
+          {action && <CardAction>{action}</CardAction>}
+        </CardHeader>
       )}
-      <div className="divide-y divide-border px-card">{children}</div>
-      {footer && <div className="flex items-center justify-end gap-2 border-t border-border bg-brand-mist px-card py-3">{footer}</div>}
-    </section>
+      <CardContent className="divide-y">{children}</CardContent>
+      {footer && <CardFooter className="flex-wrap justify-end gap-2 border-t">{footer}</CardFooter>}
+    </Card>
   )
 }
 
@@ -34,10 +33,8 @@ export function SettingsRow({ label, description, htmlFor, children, className }
   return (
     <div className={cn("grid gap-3 py-5 md:grid-cols-[minmax(0,1fr)_minmax(0,22rem)] md:items-center md:gap-8", className)}>
       <div className="min-w-0">
-        <label htmlFor={htmlFor} className="text-ui font-semibold text-brand-navy">
-          {label}
-        </label>
-        {description && <p className="mt-0.5 text-sm text-brand-subtle">{description}</p>}
+        <Label htmlFor={htmlFor}>{label}</Label>
+        {description && <p className="mt-1 text-sm text-muted-foreground">{description}</p>}
       </div>
       <div className="min-w-0">{children}</div>
     </div>

@@ -15,6 +15,9 @@ import { SubStepper } from "@/components/wizard/SubStepper"
 import { useStageNav } from "@/components/wizard/useStageNav"
 import { ThemeScope } from "@/components/wizard/ThemeScope"
 import { Wireframe } from "@/components/previews/Wireframe"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils"
 
 const STEPS = [
@@ -24,9 +27,21 @@ const STEPS = [
 ]
 
 const Tag = ({ children, icon: Icon }) => (
-  <span className="inline-flex items-center gap-1 rounded-full bg-brand-fill px-2 py-0.5 text-[11px] font-semibold text-brand-muted">
-    <Icon className="size-3" /> {children}
-  </span>
+  <Badge variant="secondary">
+    <Icon /> {children}
+  </Badge>
+)
+
+/** Ghost icon button with a tooltip repeating its aria-label. */
+const IconAction = ({ label, children, ...props }) => (
+  <Tooltip>
+    <TooltipTrigger asChild>
+      <Button type="button" variant="ghost" size="icon-sm" aria-label={label} {...props}>
+        {children}
+      </Button>
+    </TooltipTrigger>
+    <TooltipContent>{label}</TooltipContent>
+  </Tooltip>
 )
 
 /* ----------------------------- Step 1: sections ----------------------------- */
@@ -70,17 +85,12 @@ function VariantsStep({ theme, direction, sections, setSectionVariant }) {
     <div className="flex flex-col gap-14">
       <nav aria-label="Jump to section" className="-mt-2 flex flex-wrap gap-2">
         {sections.map((s) => (
-          <a
-            key={s.type}
-            href={`#section-${s.type}`}
-            className={cn(
-              "rounded-full px-3 py-1 text-sm font-medium",
-              s.variant ? "bg-brand/10 text-brand-navy" : "bg-white text-brand-muted shadow-clay-sm"
-            )}
-          >
-            {s.variant ? "✓ " : ""}
-            {sectionById[s.type].name}
-          </a>
+          <Button key={s.type} variant="outline" size="sm" asChild className={cn(!s.variant && "text-muted-foreground")}>
+            <a href={`#section-${s.type}`}>
+              {s.variant ? "✓ " : ""}
+              {sectionById[s.type].name}
+            </a>
+          </Button>
         ))}
       </nav>
       {sections.map((s, i) => {
@@ -89,8 +99,8 @@ function VariantsStep({ theme, direction, sections, setSectionVariant }) {
         return (
           <section key={s.type} id={`section-${s.type}`} className="scroll-mt-28">
             <div className="mb-4 flex flex-wrap items-center gap-2">
-              <span className="grid size-7 place-items-center rounded-full bg-brand-navy text-xs font-bold text-white">{i + 1}</span>
-              <h2 className="font-display text-xl font-semibold text-brand-navy">{type.name}</h2>
+              <span className="grid size-6 place-items-center rounded-full bg-primary text-xs font-medium text-primary-foreground">{i + 1}</span>
+              <h2 className="text-lg font-semibold">{type.name}</h2>
               {type.contentBearing && <Tag icon={FileText}>Needs content</Tag>}
             </div>
             <OptionGrid label={`${type.name} layouts`} cols="sm:grid-cols-2 lg:grid-cols-4" className="gap-4">
@@ -126,57 +136,47 @@ function SectionRow({ section, index, count, theme, pinned, onMove }) {
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition }}
       className={cn(
-        "flex items-center gap-4 rounded-2xl bg-white p-3 pr-4 shadow-clay-sm",
-        isDragging && "relative z-10 shadow-[0_16px_40px_-12px_rgba(24,27,52,0.35)] ring-brand"
+        "flex items-center gap-3 rounded-xl border bg-card p-3 text-card-foreground sm:gap-4",
+        isDragging && "relative z-10 shadow-lg ring-1 ring-ring"
       )}
     >
       {pinned ? (
-        <span className="grid size-9 place-items-center text-brand-subtle" title="Pinned">
+        <span className="grid size-7 shrink-0 place-items-center text-muted-foreground" title="Pinned">
           <Pin className="size-4" />
         </span>
       ) : (
-        <button
+        <Button
           type="button"
-          className="grid size-9 cursor-grab touch-none place-items-center rounded-lg text-brand-muted hover:bg-brand-fill active:cursor-grabbing"
+          variant="ghost"
+          size="icon-sm"
+          className="cursor-grab touch-none text-muted-foreground active:cursor-grabbing"
           aria-label={`Drag ${type.name}`}
           {...attributes}
           {...listeners}
         >
-          <GripVertical className="size-5" />
-        </button>
+          <GripVertical />
+        </Button>
       )}
-      <div className="hidden w-40 shrink-0 overflow-hidden rounded-lg shadow-clay-sm sm:block">
+      <div className="hidden w-40 shrink-0 overflow-hidden rounded-lg border sm:block">
         <ThemeScope theme={theme}>
           <Wireframe wire={variant.wire} className="pointer-events-none min-h-24 p-2.5" />
         </ThemeScope>
       </div>
       <div className="min-w-0 flex-1">
-        <p className="font-display font-semibold text-brand-navy">
-          <span className="mr-2 text-brand-subtle">{index + 1}.</span>
+        <p className="font-medium">
+          <span className="mr-2 text-muted-foreground">{index + 1}.</span>
           {type.name}
         </p>
-        <p className="truncate text-sm text-brand-muted">{variant.name}</p>
+        <p className="truncate text-sm text-muted-foreground">{variant.name}</p>
       </div>
       {!pinned && (
-        <div className="flex gap-1">
-          <button
-            type="button"
-            onClick={() => onMove(index, index - 1)}
-            disabled={index <= 1}
-            className="grid size-8 place-items-center rounded-lg text-brand-muted hover:bg-brand-fill disabled:opacity-30"
-            aria-label={`Move ${type.name} up`}
-          >
-            <ArrowUp className="size-4" />
-          </button>
-          <button
-            type="button"
-            onClick={() => onMove(index, index + 1)}
-            disabled={index >= count - 2}
-            className="grid size-8 place-items-center rounded-lg text-brand-muted hover:bg-brand-fill disabled:opacity-30"
-            aria-label={`Move ${type.name} down`}
-          >
-            <ArrowDown className="size-4" />
-          </button>
+        <div className="flex shrink-0 gap-1">
+          <IconAction label={`Move ${type.name} up`} onClick={() => onMove(index, index - 1)} disabled={index <= 1}>
+            <ArrowUp />
+          </IconAction>
+          <IconAction label={`Move ${type.name} down`} onClick={() => onMove(index, index + 1)} disabled={index >= count - 2}>
+            <ArrowDown />
+          </IconAction>
         </div>
       )}
     </li>

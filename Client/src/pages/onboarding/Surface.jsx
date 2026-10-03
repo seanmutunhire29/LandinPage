@@ -10,6 +10,7 @@ import { useStageNav } from "@/components/wizard/useStageNav"
 import { ThemeScope } from "@/components/wizard/ThemeScope"
 import { SurfaceSample } from "@/components/previews/SurfaceSample"
 import { directionById } from "@/data/directions"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
 export default function Surface() {
   const state = useDesignStore()
@@ -24,15 +25,14 @@ export default function Surface() {
       <StagePage>
         <StageHeader eyebrow="Stage 3" title={stage.title} blurb={stage.blurb} />
         {locked && (
-          <div className="mb-6 flex items-start gap-3 rounded-2xl bg-white p-4 shadow-clay-sm">
-            <span className="grid size-9 shrink-0 place-items-center rounded-full bg-brand/10 text-brand-dark">
-              <Lock className="size-4" />
-            </span>
-            <p className="text-[15px] text-brand-body">
-              <strong className="text-brand-navy">Set by your direction.</strong> {directionById[direction].name} only works with one
-              surface. A mismatched material (like brutalist + glass) breaks the look, so this one is chosen for you.
-            </p>
-          </div>
+          <Alert className="mb-6">
+            <Lock />
+            <AlertTitle>Set by your direction.</AlertTitle>
+            <AlertDescription>
+              {directionById[direction].name} only works with one surface. A mismatched material (like brutalist + glass) breaks the look, so
+              this one is chosen for you.
+            </AlertDescription>
+          </Alert>
         )}
         <OptionGrid label="Surfaces" cols={locked ? "sm:grid-cols-2" : "sm:grid-cols-2 lg:grid-cols-3"}>
           {options.map((s) => {
@@ -46,7 +46,7 @@ export default function Surface() {
                 title={s.name}
                 subtitle={s.blurb}
                 footer={
-                  <p className="mt-1.5 text-[11px] text-brand-subtle">
+                  <p className="mt-1.5 text-xs text-muted-foreground">
                     Radius {theme.radii.md}px{s.blur ? ` · blur ${s.blur}px` : ""}{s.texture ? " · grain texture" : ""}
                   </p>
                 }
